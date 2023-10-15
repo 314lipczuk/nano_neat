@@ -10,7 +10,6 @@ class Genome:
     class Node:
         types = ['Input', 'Hidden', 'Output', 'Sensor']
         def __init__(self, type:tuple[str],num ,  active=True):
-            [if i not in types raise () for i in type]
             self.inType= type[0]
             self.outType= type[1]
             self.num = num
