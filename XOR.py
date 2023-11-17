@@ -61,7 +61,7 @@ class Genome:
         for n in [n for n in self.nodes if n.node_type != 'input']:
             n.layer = find_max_len_to_input(n.node_id)
 
-    def show(self):
+    def show(self, hide_disabled=False):
         graph = nx.Graph()
         nt = VisualNetwork(notebook=True , cdn_resources='in_line',layout=True, directed=True)
         for n in self.nodes:
@@ -71,11 +71,17 @@ class Genome:
                 level = n.node_layer
             )
         for c in self.connections:
-            nt.add_edge(source=c.in_node,to=c.out_node, title=f"in:{c.innov_id}\nw:{c.weight}", hidden=(not c.enabled) )
+            nt.add_edge(source=c.in_node, \
+                        to=c.out_node, \
+                        color='blue' if c.enabled and c.is_recurrent else 'red' if not c.enabled else 'black',\
+                        title=f"in:{c.innov_id}\nw:{c.weight}",\
+                        hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
-
         nt.show('example.html')
-
+    def load_inputs(self, inputs):
+        for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key="node_id")), inputs):
+            n.sum_output = i
+            n.sum_input = i
 g = Genome(2,1)
 print(g.nodes)
 g.show()
