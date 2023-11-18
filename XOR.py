@@ -1,3 +1,4 @@
+import copy
 import math
 import random
 import networkx as nx
@@ -40,6 +41,10 @@ class Connection:
         return tmp
 
 class Genome:
+    C1 = 1
+    C2 = 1
+    C3 = 0.4
+
     def activation_function(self, x):
         return 1 / (1+math.exp(-x))
 
@@ -96,7 +101,40 @@ class Genome:
                 conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
                 n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
                 n.sum_output = self.activation_function(n.sum_input)
-        
+    def get_output(self):   
+        return [n.sum_output for n in g.nodes if n.node_type == 'output']
+
+    def compatibility_distance(self, other):
+        n1, n2 = max([n.innov_id for n in self.connections if n.enabled]), max([n.innov_id for n in other.connections if n.enabled])
+        N = max(n1,n2)
+        excess_count = len([n for n in self.connections if n.innov_id > N and n.enabled]) + len([n for n in other.connections if n.innov_id > N and n.enabled])
+        disjoint_count = len([ n for n in self.connections if n.innov_id <= N and n.enabled and n.innov_id not in [c.innov_id for c in other.connections if c.enabled]])\
+            + len([ n for n in other.connections if n.innov_id <= N and n.enabled and n.innov_id not in [c.innov_id for c in self.connections if c.enabled]])
+
+        common = [n.innov_id for n in self.connections if n.innov_id <= N and n.enabled and n.innov_id in [c.innov_id for c in other.connections if c.enabled]]
+        a = [n.weight for n in sorted(self.connections, key=lambda x: x.innov_id) if n.innov_id in common]
+        b = [n.weight for n in sorted(other.connections, key=lambda x: x.innov_id) if n.innov_id in common]
+
+        weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / len(a)
+        return Genome.C1 * excess_count + Genome.C2 * disjoint_count + Genome.C3 * weight_diff
+
+
+class Population:
+    size = 50
+    def __init__(self, size):
+        self.organisms = []
+        self.species = []
+
+class Specie:
+    threshold = 3
+    def __init__(self, id):
+        self.id = id
+        self.organisms = []
+        self.best_organism = None
+        self.best_fitness = 0
+        self.average_fitness = 0
+        self.staleness = 0
+    
 
 g = Genome(2,1)
 print(g.nodes)
@@ -104,3 +142,5 @@ g.show()
 g.load_inputs([0,1])
 g.run_network()
 print([n.sum_output for n in g.nodes if n.node_type == 'output'])
+g1 = copy.deepcopy(g)
+print('compd dist', g.compatibility_distance(g1))
