@@ -1,3 +1,4 @@
+import math
 import random
 import networkx as nx
 from pyvis.network import Network as VisualNetwork
@@ -39,6 +40,9 @@ class Connection:
         return tmp
 
 class Genome:
+    def activation_function(self, x):
+        return 1 / (1+math.exp(-x))
+
     def __init__(self, inputN, outputN):
         self.nodes = []
         self.connections = []
@@ -78,10 +82,25 @@ class Genome:
                         hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
         nt.show('example.html')
+
     def load_inputs(self, inputs):
-        for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key="node_id")), inputs):
+        for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key=lambda x: x.node_id)), inputs):
             n.sum_output = i
             n.sum_input = i
+
+    def run_network(self):
+        layers = sorted(list(set([n.node_layer for n in self.nodes])))
+        for l in layers[1:]:
+            nodes = [n for n in self.nodes if n.node_layer == l]
+            for n in nodes:
+                conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
+                n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
+                n.sum_output = self.activation_function(n.sum_input)
+        
+
 g = Genome(2,1)
 print(g.nodes)
 g.show()
+g.load_inputs([0,1])
+g.run_network()
+print([n.sum_output for n in g.nodes if n.node_type == 'output'])
