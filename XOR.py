@@ -7,10 +7,11 @@ from pyvis.network import Network as VisualNetwork
 """
 done
 - speciation
-
-todos 
 - crossover
 - mutation
+
+todos 
+- test crossover, mutation and speciation
 - toplevel loop
 - species generations since improvement -> offspring count
 """
@@ -63,10 +64,78 @@ class Genome:
     C1 = 1
     C2 = 1
     C3 = 0.4
+    chance_mutate_weight = 0.8
+    chance_of_20p_weight_change = 0.9
+    chance_of_new_random_weight = 0.1
+    chance_to_add_connection = 0.05
+    chance_to_add_node= 0.05
+    tries_to_make_connections = 20
+    chance_to_reactivate_disabled_connection = 0.25
+    allowRecurrent = False
+
+    def mutate_add_node(self):
+        conn_to_pick = random.choice([c for c in self.connections if c.enabled and c.is_recurrent == False])
+        conn_to_pick.enabled = False
+        
+        new_node = Node(node_id=Node.get_node_id(), layer=1, node_type='hidden')
+        c1 = Connection(innov_id=Connection.get_innov_id((conn_to_pick.in_node, new_node.node_id)),\
+                        in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
+                        weight=conn_to_pick.weight, enabled=True, is_recurrent=False)
+        c2 = Connection(innov_id=Connection.get_innov_id((new_node.node_id, conn_to_pick.out_node )),\
+                        in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
+                        weight=1.0, enabled=True, is_recurrent=False)
+        self.nodes.append(new_node)
+        self.connections.append(c1)
+        self.connections.append(c2)
+        self.refresh_layers()
+
+    def mutate_add_connection(self):
+        self.refresh_layers()
+        counter = 0
+        while counter < Genome.tries_to_make_connections:
+            fr, to = random.choices(self.nodes, k=2)
+            is_recurrent = fr.node_layer > to.node_layer
+            existing = [c for c in self.connections if c.in_node == fr.node_id and c.out_node == to.node_id]
+            if len(existing) != 0:
+                if existing[0].enabled == False and random.random() < Genome.chance_to_reactivate_disabled_connection:
+                    existing[0].enabled = True
+                    return
+                else:
+                    counter += 1
+                    continue
+
+            if fr.node_layer == to.node_layer or\
+                fr.node_id == to.node_id or\
+                (Genome.allowRecurrent == False and is_recurrent) or\
+                fr.node_type == 'output' or\
+                to.node_type == 'input': 
+                counter += 1
+                continue
+            
+            conn= Connection(innov_id=Connection.get_innov_id((fr.node_id, to.node_id)),\
+                in_node=fr.node_id, out_node=to.node_id, weight=random.random(), enabled=True, is_recurrent=is_recurrent)
+            self.connections.append(conn)
+            break
+
+    def mutate_weights(self):
+        for c in self.connections:
+            if random.random() < Genome.change_of_20p_weight_change:
+                c.weight += c.weight * (0.2 if random.random() < 0.5 else -0.2) 
+            else:
+                c.weight = random.uniform(0, 1)
+    def mutate(self):
+        r = random.random()
+        if random.random() < Genome.chance_mutate_weight:
+            self.mutate_weights()
+
+        if random.random() < Genome.chance_to_add_node:
+            self.mutate_add_node()
+        
+        if random.random() < Genome.chance_to_add_connection:
+            self.mutate_add_connection()
 
     def activation_function(self, x):
         return 1 / (1+math.exp(-x))
-
 
     def __init__(self, inputN, outputN):
         self.nodes = []
@@ -80,9 +149,6 @@ class Genome:
             for o in [o for o in self.nodes if o.node_type == 'output']:
                 self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
         self.refresh_layers()
-    
-    def mutate(self):
-        pass
     
     def refresh_layers(self):
         inputs = [n.node_id for n in self.nodes if n.node_type == 'input']
