@@ -9,9 +9,10 @@ done
 - speciation
 
 todos 
-- mutation
 - crossover
+- mutation
 - toplevel loop
+- species generations since improvement -> offspring count
 """
 
 class Node:
@@ -35,7 +36,7 @@ class Node:
 
 class Connection:
     next_innov_id=0
-
+    innov_table = {}
     def __init__(self, innov_id, in_node, out_node, weight=1.0, enabled=True, is_recurrent=False):
         self.innov_id=innov_id
         self.in_node=in_node
@@ -43,6 +44,9 @@ class Connection:
         self.weight=weight
         self.enabled=enabled
         self.is_recurrent=is_recurrent
+
+    def __hash__(self):
+        return hash(self.innov_id)
     
     @staticmethod
     def get_innov_id(connection_tuple:tuple(int,int)):
@@ -63,6 +67,7 @@ class Genome:
     def activation_function(self, x):
         return 1 / (1+math.exp(-x))
 
+
     def __init__(self, inputN, outputN):
         self.nodes = []
         self.connections = []
@@ -73,7 +78,7 @@ class Genome:
         
         for i in [i for i in self.nodes if i.node_type == 'input']:
             for o in [o for o in self.nodes if o.node_type == 'output']:
-                self.connections.append(Connection(innov_id=Connection.get_innov_id(), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
+                self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
         self.refresh_layers()
     
     def mutate(self):
@@ -145,10 +150,33 @@ class Genome:
         error = sum( [abs( r - o ) for o, r in results] )
         self.fitness = (4 - error) ** 2
 
+def crossover(genome1:Genome, genome2:Genome):
+    def equals(g1,g2):
+        equality_threshold = 0.01
+        return abs(g1.fitness - g2.fitness) < equality_threshold
+
+    def calculate_weight_for_common_genes(c1,c2, method='avg'):
+        assert method == 'avg' or method == 'random'
+        if method == 'avg': return (c1.weight + c2.weight) /2 
+        else: return c1.weight if random.random() < 0.5 else c2.weight 
+
+    eq = equals(genome1, genome2)
+    prototype = copy.deepcopy(
+        (genome1 if random.random() < 0.5 else genome2) if eq else \
+        genome1 if genome1.fitness > genome2.fitness else genome2
+    )
+    matching_genes = set(genome1.connections).intersection(set(genome2.connections))
+    for con in [con for con in prototype.connections if con in matching_genes]:
+        c1 = [c for c in genome1.connections if c.innov_id == con.innov_id][0]
+        c2 = [c for c in genome2.connections if c.innov_id == con.innov_id][0]
+        con.weight = calculate_weight_for_common_genes(c1,c2)
+    return prototype
+
 
 class Population:
     size = 50
-    specie_goal = 4
+    specie_target = 4
+    threshold_step_size = 0.3
 
     def calculate_offspring(self):
         for s in self.species:
@@ -157,10 +185,23 @@ class Population:
         for s in self.species:
             s.offspring = math.floor((s.average / total_average) * s.n)
 
+    def crossover(self):
+        new_population = []
+        for s in self.species:
+            specie_counter = 0
+            while specie_counter < s.offspring:
+                g1, g2 = random.choices(s.organisms, weights=[o.fitness for o in s.organisms], k=2)
+                new_population.append(crossover(g1,g2))
+                specie_counter+=1
+        while len(new_population) < Population.size:
+            new_population.append(copy.deepcopy(self.default_genome))
+        self.organisms = new_population
+
     def __init__(self, size):
         self.organisms = []
         self.species = []
         g = Genome(2,1)
+        self.default_genome = g
         for _ in range(size+1):
             self.organisms.append(copy.deepcopy(g))
         self.speciate()
@@ -183,6 +224,13 @@ class Population:
         for s in self.species: 
             s.representative = random.choice(s.organisms)
 
+        #setting new threshold to adjust specie size
+        specie_size = len(self.species)
+        new_threshold = Specie.threshold if specie_size == Population.specie_target \
+            else Specie.threshold + Population.threshold_step_size if specie_size < Population.specie_target\
+            else Specie.threshold - Population.threshold_step_size
+        Specie.threshold = new_threshold
+
 class Specie:
     threshold = 3
     use_adjusted_fitness=True
@@ -190,6 +238,7 @@ class Specie:
         self.id = id
         self.organisms = []
         self.representative =  representative
+        self.gens_since_improvement = 0
 
     def add_organism(self, organism):
         self.organisms.append(organism)
