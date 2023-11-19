@@ -45,10 +45,15 @@ class Connection:
         self.is_recurrent=is_recurrent
     
     @staticmethod
-    def get_innov_id():
-        tmp = Connection.next_innov_id
-        Connection.next_innov_id+=1
-        return tmp
+    def get_innov_id(connection_tuple:tuple(int,int)):
+        exists = Connection.innov_table.get(connection_tuple, default=None)
+        if exists is not None:
+            return exists
+        else:
+            tmp = Connection.next_innov_id
+            Connection.innov_table[connection_tuple] = tmp
+            Connection.next_innov_id+=1
+            return tmp
 
 class Genome:
     C1 = 1
