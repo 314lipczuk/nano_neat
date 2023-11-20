@@ -14,6 +14,7 @@ todos
 - test crossover, mutation and speciation
 - toplevel loop
 - species generations since improvement -> offspring count
+- maybe recurrent connections
 """
 
 class Node:
@@ -30,10 +31,13 @@ class Node:
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
     @staticmethod
-    def get_node_id():
+    def get_node_id(_):
         tmp = Node.next_node_id
         Node.next_node_id+=1
         return tmp
+    #@staticmethod
+    #def get_node_id(genome):
+    #    return len(genome.nodes)
 
 class Connection:
     next_innov_id=0
@@ -48,10 +52,13 @@ class Connection:
 
     def __hash__(self):
         return hash(self.innov_id)
+
+    def __repr__(self):
+        return f"Conn ${self.innov_id}, [{self.in_node} -> {self.out_node}] {'enabled' if self.enabled else 'disabled'}"
     
     @staticmethod
-    def get_innov_id(connection_tuple:tuple(int,int)):
-        exists = Connection.innov_table.get(connection_tuple, default=None)
+    def get_innov_id(connection_tuple:tuple[int,int]):
+        exists = Connection.innov_table.get(connection_tuple)
         if exists is not None:
             return exists
         else:
@@ -77,12 +84,12 @@ class Genome:
         conn_to_pick = random.choice([c for c in self.connections if c.enabled and c.is_recurrent == False])
         conn_to_pick.enabled = False
         
-        new_node = Node(node_id=Node.get_node_id(), layer=1, node_type='hidden')
+        new_node = Node(node_id=Node.get_node_id(self), layer=1, node_type='hidden')
         c1 = Connection(innov_id=Connection.get_innov_id((conn_to_pick.in_node, new_node.node_id)),\
                         in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
                         weight=conn_to_pick.weight, enabled=True, is_recurrent=False)
         c2 = Connection(innov_id=Connection.get_innov_id((new_node.node_id, conn_to_pick.out_node )),\
-                        in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
+                        in_node=new_node.node_id, out_node=conn_to_pick.out_node,\
                         weight=1.0, enabled=True, is_recurrent=False)
         self.nodes.append(new_node)
         self.connections.append(c1)
@@ -112,14 +119,14 @@ class Genome:
                 counter += 1
                 continue
             
-            conn= Connection(innov_id=Connection.get_innov_id((fr.node_id, to.node_id)),\
+            conn = Connection(innov_id=Connection.get_innov_id((fr.node_id, to.node_id)),\
                 in_node=fr.node_id, out_node=to.node_id, weight=random.random(), enabled=True, is_recurrent=is_recurrent)
             self.connections.append(conn)
             break
 
     def mutate_weights(self):
         for c in self.connections:
-            if random.random() < Genome.change_of_20p_weight_change:
+            if random.random() < Genome.chance_of_20p_weight_change:
                 c.weight += c.weight * (0.2 if random.random() < 0.5 else -0.2) 
             else:
                 c.weight = random.uniform(0, 1)
@@ -140,15 +147,19 @@ class Genome:
     def __init__(self, inputN, outputN):
         self.nodes = []
         self.connections = []
+        self.fitness = 0
         for _ in range(inputN):
-            self.nodes.append(Node(node_id=Node.get_node_id(), node_type='input', layer=0))
+            self.nodes.append(Node(node_id=Node.get_node_id(self), node_type='input', layer=0))
         for _ in range(outputN):
-            self.nodes.append(Node(node_id=Node.get_node_id(), node_type='output', layer=1))
+            self.nodes.append(Node(node_id=Node.get_node_id(self), node_type='output', layer=1))
         
         for i in [i for i in self.nodes if i.node_type == 'input']:
             for o in [o for o in self.nodes if o.node_type == 'output']:
                 self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
         self.refresh_layers()
+
+    def __repr__(self):
+        return f"Genome f:${self.fitness}, nodes:{len(self.nodes)}, conns:{len(self.connections)}"
     
     def refresh_layers(self):
         inputs = [n.node_id for n in self.nodes if n.node_type == 'input']
@@ -157,7 +168,10 @@ class Genome:
             return max(conns, default=0)
             
         for n in [n for n in self.nodes if n.node_type != 'input']:
-            n.layer = find_max_len_to_input(n.node_id)
+            n.node_layer = find_max_len_to_input(n.node_id)
+        maxL = max([n.node_layer for n in self.nodes])
+        for n in [n for n in self.nodes if n.node_type == 'output']:
+            n.node_layer = maxL+1
 
     def show(self, hide_disabled=False):
         graph = nx.Graph()
@@ -190,8 +204,9 @@ class Genome:
                 conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
                 n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
                 n.sum_output = self.activation_function(n.sum_input)
+
     def get_output(self):   
-        return [n.sum_output for n in g.nodes if n.node_type == 'output']
+        return [n.sum_output for n in self.nodes if n.node_type == 'output']
 
     def compatibility_distance(self, other):
         n1, n2 = max([n.innov_id for n in self.connections if n.enabled]), max([n.innov_id for n in other.connections if n.enabled])
@@ -204,7 +219,7 @@ class Genome:
         a = [n.weight for n in sorted(self.connections, key=lambda x: x.innov_id) if n.innov_id in common]
         b = [n.weight for n in sorted(other.connections, key=lambda x: x.innov_id) if n.innov_id in common]
 
-        weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / len(a)
+        weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / max(len(a), 1)
         return Genome.C1 * excess_count + Genome.C2 * disjoint_count + Genome.C3 * weight_diff
     
     def calculate_fitness(self, inputs, expected_outputs):
@@ -236,23 +251,64 @@ def crossover(genome1:Genome, genome2:Genome):
         c1 = [c for c in genome1.connections if c.innov_id == con.innov_id][0]
         c2 = [c for c in genome2.connections if c.innov_id == con.innov_id][0]
         con.weight = calculate_weight_for_common_genes(c1,c2)
+    
+    prototype.mutate()
     return prototype
 
 
 class Population:
     size = 50
     specie_target = 4
+    max_iterations = 100
     threshold_step_size = 0.3
+    problem_fitness_threshold = 15.5
+
+    def calculate_fitness(self):
+        for o in self.organisms:
+            o.calculate_fitness(self.input, self.output)
+
+    def iteration(self):
+        print("Generation", self.generation, "Best fitness", self.organisms[0].fitness)
+        self.speciate()
+        self.calculate_fitness()
+        self.organisms.sort(key=lambda x: x.fitness, reverse=True)
+        if self.organisms[0].fitness > Population.problem_fitness_threshold:
+            self.done = True
+            self.champion = self.organisms[0]
+            return
+        self.calculate_offspring()
+        self.crossover()
+
+    def run(self):
+        while self.done == False and self.generation < Population.max_iterations:
+            self.iteration()
+            self.generation += 1
+        if self.done:
+            print("Done")
+            print("Champion", self.champion.fitness)
+            self.champion.show()
+        else:
+            print("Did not find solution in {} iterations".format(Population.max_iterations))
+            print(f"Species:, {len(self.species)}")
 
     def calculate_offspring(self):
         for s in self.species:
             s.calculate_stats()
         total_average = sum([s.average for s in self.species])
         for s in self.species:
-            s.offspring = math.floor((s.average / total_average) * s.n)
+            #s.offspring = math.floor((s.average / total_average) * s.n) #Population.size
+            s.offspring = math.floor((s.average / total_average) * Population.size) #Population.size
+            print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
 
     def crossover(self):
         new_population = []
+        counter = 0
+
+        if True: #TODO add check for elitism
+            # top 5% of population goes to next generation
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.05)] 
+            for b in best: new_population.append(copy.deepcopy(b))
+
         for s in self.species:
             specie_counter = 0
             while specie_counter < s.offspring:
@@ -260,12 +316,19 @@ class Population:
                 new_population.append(crossover(g1,g2))
                 specie_counter+=1
         while len(new_population) < Population.size:
+            counter += 1
             new_population.append(copy.deepcopy(self.default_genome))
+        print(f"generation {self.generation} had {counter} zeroed genomes")
         self.organisms = new_population
 
-    def __init__(self, size):
+    def __init__(self, size, input, output):
         self.organisms = []
         self.species = []
+        self.input = input
+        self.output = output
+        self.generation = 0
+        self.done = False
+        Population.threshold_step_size = 0.3
         g = Genome(2,1)
         self.default_genome = g
         for _ in range(size+1):
@@ -291,20 +354,21 @@ class Population:
             s.representative = random.choice(s.organisms)
 
         #setting new threshold to adjust specie size
-        specie_size = len(self.species)
-        new_threshold = Specie.threshold if specie_size == Population.specie_target \
-            else Specie.threshold + Population.threshold_step_size if specie_size < Population.specie_target\
-            else Specie.threshold - Population.threshold_step_size
-        Specie.threshold = new_threshold
+        #specie_size = len(self.species)
+        #new_threshold = Specie.threshold if specie_size == Population.specie_target \
+        #    else Specie.threshold - Population.threshold_step_size if specie_size < Population.specie_target\
+        #    else Specie.threshold + Population.threshold_step_size
+        #Specie.threshold = new_threshold
 
 class Specie:
-    threshold = 3
+    threshold = 3.5
     use_adjusted_fitness=True
     def __init__(self, id, representative):
         self.id = id
         self.organisms = []
         self.representative =  representative
         self.gens_since_improvement = 0
+        self.average = 0
 
     def add_organism(self, organism):
         self.organisms.append(organism)
@@ -318,11 +382,16 @@ class Specie:
         self.organisms = []
     
     def calculate_stats(self):
+        oldAvg = self.average
         if Specie.use_adjusted_fitness:
             self.calculate_adjusted_fitness()
             self.average = sum([o.adjusted_fitness for o in self.organisms]) / len(self.organisms)
         else:
             self.average = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        if self.average >= oldAvg:
+            self.gens_since_improvement = 0
+        else:
+            self.gens_since_improvement += 1
         self.n = len(self.organisms)
 
 #g = Genome(2,1)
@@ -333,9 +402,10 @@ class Specie:
 #print([n.sum_output for n in g.nodes if n.node_type == 'output'])
 #g1 = copy.deepcopy(g)
 #print('compd dist', g.compatibility_distance(g1))
-#INPUT = [[0,0], [0,1], [1,0], [1,1]]
-#OUTPUT = [0, 1, 1, 0]
+INPUT = [[0,0], [0,1], [1,0], [1,1]]
+OUTPUT = [0, 1, 1, 0]
 #g.calculate_fitness(INPUT, OUTPUT)
 #print('fitness', g.fitness)
-p = Population(50)
-print('species',len(p.species), p.species, len(p.species[0].organisms))
+#p = Population(50, INPUT, OUTPUT)
+#p.run()
+#p.organisms[0].show()
