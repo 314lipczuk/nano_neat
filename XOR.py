@@ -1,3 +1,4 @@
+import torch
 import copy
 import math
 import random
@@ -9,10 +10,13 @@ done
 - speciation
 - crossover
 - mutation
+- toplevel loop
+- elitism
+- only top 20% of specie organisms can reproduce
 
 todos 
+- why i get no structural mutations?
 - test crossover, mutation and speciation
-- toplevel loop
 - species generations since improvement -> offspring count
 - maybe recurrent connections
 """
@@ -30,14 +34,14 @@ class Node:
     def __repr__(self):
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
-    @staticmethod
-    def get_node_id(_):
-        tmp = Node.next_node_id
-        Node.next_node_id+=1
-        return tmp
     #@staticmethod
-    #def get_node_id(genome):
-    #    return len(genome.nodes)
+    #def get_node_id(_):
+    #    tmp = Node.next_node_id
+    #    Node.next_node_id+=1
+    #    return tmp
+    @staticmethod
+    def get_node_id(genome):
+        return len(genome.nodes)
 
 class Connection:
     next_innov_id=0
@@ -141,8 +145,15 @@ class Genome:
         if random.random() < Genome.chance_to_add_connection:
             self.mutate_add_connection()
 
-    def activation_function(self, x):
-        return 1 / (1+math.exp(-x))
+    def activation_function(self, i):
+        #return 1 / (1+math.exp(-x))
+
+        # steepened sigmoid
+        x = torch.tensor(i)
+        if x >= 0:
+            return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
+        else:
+            return float(torch.exp(1e5*x)/(1+torch.exp(1e5*x)).to(torch.float))
 
     def __init__(self, inputN, outputN):
         self.nodes = []
@@ -227,18 +238,19 @@ class Genome:
         for i, o in zip(inputs, expected_outputs):
             self.load_inputs(i)
             self.run_network()
-            results.append((o, self.get_output()[0]))
+            output = self.get_output()[0]
+            results.append((o, output ))
         error = sum( [abs( r - o ) for o, r in results] )
-        self.fitness = (4 - error) ** 2
+        self.fitness = round((4 - error) ** 2, 2)
 
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
-        equality_threshold = 0.01
+        equality_threshold = 0.05
         return abs(g1.fitness - g2.fitness) < equality_threshold
 
     def calculate_weight_for_common_genes(c1,c2, method='avg'):
         assert method == 'avg' or method == 'random'
-        if method == 'avg': return (c1.weight + c2.weight) /2 
+        if method == 'avg': return (c1.weight + c2.weight) / 2 
         else: return c1.weight if random.random() < 0.5 else c2.weight 
 
     eq = equals(genome1, genome2)
@@ -298,12 +310,15 @@ class Population:
         for s in self.species:
             #s.offspring = math.floor((s.average / total_average) * s.n) #Population.size
             s.offspring = math.floor((s.average / total_average) * Population.size) #Population.size
+            if s.gens_since_improvement >= 15:
+                s.offspring = 0
             print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
 
     def crossover(self):
         new_population = []
         counter = 0
 
+        OUT_OF_SPECIE_MODIFIER = 0.3
         if True: #TODO add check for elitism
             # top 5% of population goes to next generation
             best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.05)] 
@@ -311,8 +326,18 @@ class Population:
 
         for s in self.species:
             specie_counter = 0
+
+            choices = []
+            weights = []
+            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms)), 1)] ]:
+                choices.append(x)
+                weights.append(x.fitness)
+            #for x in [x for x in sorted(self.organisms, key=lambda f:f.fitness, reverse=True)[math.floor(0.2 * len(s.organisms) ):] ]:
+            #    choices.append(x)
+            #    weights.append(x.fitness * OUT_OF_SPECIE_MODIFIER)
+
             while specie_counter < s.offspring:
-                g1, g2 = random.choices(s.organisms, weights=[o.fitness for o in s.organisms], k=2)
+                g1, g2 = random.choices(choices, weights=weights, k=2)
                 new_population.append(crossover(g1,g2))
                 specie_counter+=1
         while len(new_population) < Population.size:
@@ -321,15 +346,16 @@ class Population:
         print(f"generation {self.generation} had {counter} zeroed genomes")
         self.organisms = new_population
 
-    def __init__(self, size, input, output):
+    def __init__(self, size, input, output, genome):
         self.organisms = []
         self.species = []
         self.input = input
         self.output = output
         self.generation = 0
         self.done = False
+        Population.size = size
         Population.threshold_step_size = 0.3
-        g = Genome(2,1)
+        g = Genome(genome[0], genome[1])
         self.default_genome = g
         for _ in range(size+1):
             self.organisms.append(copy.deepcopy(g))
@@ -361,7 +387,7 @@ class Population:
         #Specie.threshold = new_threshold
 
 class Specie:
-    threshold = 3.5
+    threshold = 3
     use_adjusted_fitness=True
     def __init__(self, id, representative):
         self.id = id
@@ -393,6 +419,9 @@ class Specie:
         else:
             self.gens_since_improvement += 1
         self.n = len(self.organisms)
+
+    def __repr__(self):
+        return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
 
 #g = Genome(2,1)
 #print(g.nodes)
