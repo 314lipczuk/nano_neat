@@ -91,10 +91,10 @@ class Genome:
         new_node = Node(node_id=Node.get_node_id(self), layer=1, node_type='hidden')
         c1 = Connection(innov_id=Connection.get_innov_id((conn_to_pick.in_node, new_node.node_id)),\
                         in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
-                        weight=conn_to_pick.weight, enabled=True, is_recurrent=False)
+                        weight=1.0, enabled=True, is_recurrent=False)
         c2 = Connection(innov_id=Connection.get_innov_id((new_node.node_id, conn_to_pick.out_node )),\
                         in_node=new_node.node_id, out_node=conn_to_pick.out_node,\
-                        weight=1.0, enabled=True, is_recurrent=False)
+                        weight=conn_to_pick.weight, enabled=True, is_recurrent=False)
         self.nodes.append(new_node)
         self.connections.append(c1)
         self.connections.append(c2)
@@ -124,7 +124,7 @@ class Genome:
                 continue
             
             conn = Connection(innov_id=Connection.get_innov_id((fr.node_id, to.node_id)),\
-                in_node=fr.node_id, out_node=to.node_id, weight=random.random(), enabled=True, is_recurrent=is_recurrent)
+                in_node=fr.node_id, out_node=to.node_id, weight=random.uniform(-1,1), enabled=True, is_recurrent=is_recurrent)
             self.connections.append(conn)
             break
 
@@ -133,7 +133,7 @@ class Genome:
             if random.random() < Genome.chance_of_20p_weight_change:
                 c.weight += c.weight * (0.2 if random.random() < 0.5 else -0.2) 
             else:
-                c.weight = random.uniform(0, 1)
+                c.weight = random.uniform(-1, 1)
     def mutate(self):
         r = random.random()
         if random.random() < Genome.chance_mutate_weight:
@@ -146,9 +146,10 @@ class Genome:
             self.mutate_add_connection()
 
     def activation_function(self, i):
+        #x = i
         #return 1 / (1+math.exp(-x))
 
-        # steepened sigmoid
+        #steepened sigmoid
         x = torch.tensor(i)
         if x >= 0:
             return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
@@ -213,7 +214,10 @@ class Genome:
             nodes = [n for n in self.nodes if n.node_layer == l]
             for n in nodes:
                 conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
-                n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
+                #n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
+                n.sum_input = 0
+                for c in conns:
+                    n.sum_input += c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output
                 n.sum_output = self.activation_function(n.sum_input)
 
     def get_output(self):   
@@ -245,7 +249,7 @@ class Genome:
 
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
-        equality_threshold = 0.05
+        equality_threshold = 0.015
         return abs(g1.fitness - g2.fitness) < equality_threshold
 
     def calculate_weight_for_common_genes(c1,c2, method='avg'):
@@ -438,3 +442,11 @@ OUTPUT = [0, 1, 1, 0]
 #p = Population(50, INPUT, OUTPUT)
 #p.run()
 #p.organisms[0].show()
+
+# individual tests for all major components
+#also - make sure that i can reset state of the whole program so that tests do not interfere with normal functioning and each other
+
+def crossover_test():
+    g1 = Genome(2,1)
+    g2 = Genome(2,1)
+    g1.mutate_add_node()
