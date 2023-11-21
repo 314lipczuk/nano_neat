@@ -19,6 +19,8 @@ todos
 - test crossover, mutation and speciation
 - species generations since improvement -> offspring count
 - maybe recurrent connections
+
+O KUREWA TO DZIAŁA
 """
 
 class Node:
