@@ -36,12 +36,7 @@ class Node:
     def __repr__(self):
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
-    #@staticmethod
-    #def get_node_id(_):
-    #    tmp = Node.next_node_id
-    #    Node.next_node_id+=1
-    #    return tmp
-    @staticmethod
+    @staticmethod #working
     def get_node_id(genome):
         return len(genome.nodes)
 
@@ -286,7 +281,7 @@ class Population:
             o.calculate_fitness(self.input, self.output)
 
     def iteration(self):
-        print("Generation", self.generation, "Best fitness", self.organisms[0].fitness)
+        #print("Generation", self.generation, "Best fitness", self.organisms[0].fitness)
         self.speciate()
         self.calculate_fitness()
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
@@ -302,12 +297,14 @@ class Population:
             self.iteration()
             self.generation += 1
         if self.done:
-            print("Done")
-            print("Champion", self.champion.fitness)
-            self.champion.show()
+            pass
+            #print("Done")
+            #print("Champion", self.champion.fitness)
+            #self.champion.show()
         else:
-            print("Did not find solution in {} iterations".format(Population.max_iterations))
-            print(f"Species:, {len(self.species)}")
+            pass
+            #print("Did not find solution in {} iterations".format(Population.max_iterations))
+            #print(f"Species:, {len(self.species)}")
 
     def calculate_offspring(self):
         for s in self.species:
@@ -318,7 +315,7 @@ class Population:
             s.offspring = math.floor((s.average / total_average) * Population.size) #Population.size
             if s.gens_since_improvement >= 15:
                 s.offspring = 0
-            print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
+            #print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
 
     def crossover(self):
         new_population = []
@@ -349,7 +346,7 @@ class Population:
         while len(new_population) < Population.size:
             counter += 1
             new_population.append(copy.deepcopy(self.default_genome))
-        print(f"generation {self.generation} had {counter} zeroed genomes")
+        #print(f"generation {self.generation} had {counter} zeroed genomes")
         self.organisms = new_population
 
     def __init__(self, size, input, output, genome):
@@ -429,26 +426,36 @@ class Specie:
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
 
-#g = Genome(2,1)
-#print(g.nodes)
-#g.show()
-#g.load_inputs([0,1])
-#g.run_network()
-#print([n.sum_output for n in g.nodes if n.node_type == 'output'])
-#g1 = copy.deepcopy(g)
-#print('compd dist', g.compatibility_distance(g1))
-INPUT = [[0,0], [0,1], [1,0], [1,1]]
+
+#INPUT = [[0,0], [0,1], [1,0], [1,1]]
+#OUTPUT = [0, 1, 1, 0]
+#
+#TEST_RUNS = 100
+#results = []
+#for t in range(TEST_RUNS):
+#    p = Population(50, INPUT, OUTPUT, (2,1))
+#    p.run()
+#    if p.done:
+#        results.append((True, p.generation))
+#    else:
+#        results.append((False, -1))
+#
+#print(f"Out of {TEST_RUNS} tests {len([r for r in results if r[0]])} succeeded. Average generations is {sum([r[1] for r in results if r[0]]) / len([r for r in results if r[0]])}")
+
+
+
+
+INPUT = [[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
 OUTPUT = [0, 1, 1, 0]
-#g.calculate_fitness(INPUT, OUTPUT)
-#print('fitness', g.fitness)
-#p = Population(50, INPUT, OUTPUT)
-#p.run()
-#p.organisms[0].show()
 
-# individual tests for all major components
-#also - make sure that i can reset state of the whole program so that tests do not interfere with normal functioning and each other
+TEST_RUNS = 100
+results = []
+for t in range(TEST_RUNS):
+    p = Population(50, INPUT, OUTPUT, (3,1))
+    p.run()
+    if p.done:
+        results.append((True, p.generation))
+    else:
+        results.append((False, -1))
 
-def crossover_test():
-    g1 = Genome(2,1)
-    g2 = Genome(2,1)
-    g1.mutate_add_node()
+print(f"Out of {TEST_RUNS} tests {len([r for r in results if r[0]])} succeeded. Average generations is {sum([r[1] for r in results if r[0]]) / len([r for r in results if r[0]])}")
