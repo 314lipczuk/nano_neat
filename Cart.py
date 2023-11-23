@@ -238,7 +238,7 @@ class Genome:
         observation,info = environment.reset()
         done = False       
         # take in observations
-        reward = 0
+        fin_reward = 0
 
         while not done:
             self.load_inputs(observation)
@@ -246,11 +246,12 @@ class Genome:
             output = self.get_output()[0]
             action = 1 if output > 0.5 else 0
             observation, reward, terminated, truncated, info = environment.step(action)
+            fin_reward += reward
             if  terminated or truncated:
                 done = True
                 #observation, info = environment.reset()
 
-        self.fitness = reward
+        self.fitness = fin_reward
         """
         results = []
         for i, o in zip(inputs, expected_outputs):
@@ -263,10 +264,10 @@ class Genome:
         """
 
     def render_run(self, environment: gym.Env):
-        observation = environment.reset()
+        observation, info = environment.reset()
         done = False       
         # take in observations
-        reward = 0
+        final_reward = 0
         environment.render()
         while not done:
             self.load_inputs(observation)
@@ -274,10 +275,11 @@ class Genome:
             output = self.get_output()[0]
             action = 1 if output > 0.5 else 0
             observation, reward, terminated, truncated, info = environment.step(action)
+            final_reward += reward
             if  terminated or truncated:
                 done = True
                 observation, info = environment.reset()
-        print(f"Fitness of running organism: {reward}")
+        print(f"Fitness of running organism: {final_reward}")
 
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
@@ -311,8 +313,11 @@ class Population:
     threshold_step_size = 0.3
     problem_fitness_threshold = 100
 
-    def __init__(self, size, genome):
-        self.env = gym.make('CartPole-v1', render_mode='human')
+    def __init__(self, size, genome, show=False):
+        if show:
+            self.env = gym.make('CartPole-v1', render_mode='human')
+        else:
+            self.env = gym.make('CartPole-v1', render_mode='none')
         self.organisms = []
         self.species = []
         self.generation = 0
@@ -459,7 +464,11 @@ class Specie:
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
 
 def main():
-    p = Population(50, (4,1))
+    p = Population(50, (4,1), show=False)
     p.run()
+    if p.done:
+        new_env = gym.make('CartPole-v1', render_mode='human')
+        p.champion.render_run(new_env)
+        p.champion.show()
 
 main()
