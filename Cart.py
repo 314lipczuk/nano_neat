@@ -15,10 +15,10 @@ Todos:
 - a nice fit into gymnasium API 
 - numpy numerical stuff
 
-Okej, jak to zacząć?
-Myślę że optymalnie będzie zacząć od ogarnięcia api do gymnasium,
-potem zacząć modyfikować ewaluację coby pasowało, a na końcu odpalić rekurencyjne połączenia.
-Wtedy jezeli będę musiał, to pododawać numpy'a
+Uhhh..
+Seems to me that cartpole can be and is solved by the simplest 4-1 network 
+without any hidden nodes or recurrent connections. That is somewhat suspicious.
+So, i will try to approach a more difficult problem from classic control
 """
 
 class Node:
@@ -156,15 +156,15 @@ class Genome:
             self.mutate_add_connection()
 
     def activation_function(self, i):
-        #x = i
-        #return 1 / (1+math.exp(-x))
+        x = i
+        return 1 / (1+math.exp(-x))
 
         #steepened sigmoid
-        x = torch.tensor(i)
-        if x >= 0:
-            return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
-        else:
-            return float(torch.exp(1e5*x)/(1+torch.exp(1e5*x)).to(torch.float))
+        #x = torch.tensor(i)
+        #if x >= 0:
+        #    return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
+        #else:
+        #    return float(torch.exp(1e5*x)/(1+torch.exp(1e5*x)).to(torch.float))
 
     def __repr__(self):
         return f"Genome f:${self.fitness}, nodes:{len(self.nodes)}, conns:{len(self.connections)}"
@@ -181,7 +181,7 @@ class Genome:
         for n in [n for n in self.nodes if n.node_type == 'output']:
             n.node_layer = maxL+1
 
-    def show(self, hide_disabled=False):
+    def show(self, hide_disabled=False, name='example'):
         graph = nx.Graph()
         nt = VisualNetwork(notebook=True , cdn_resources='in_line',layout=True, directed=True)
         for n in self.nodes:
@@ -197,7 +197,7 @@ class Genome:
                         title=f"in:{c.innov_id}\nw:{c.weight}",\
                         hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
-        nt.show('example.html')
+        nt.show(f'{name}.html')
 
     def load_inputs(self, inputs):
         for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key=lambda x: x.node_id)), inputs ):
@@ -311,7 +311,7 @@ class Population:
     specie_target = 4
     max_iterations = 500
     threshold_step_size = 0.3
-    problem_fitness_threshold = 100
+    problem_fitness_threshold = 499 
 
     def __init__(self, size, genome, show=False):
         if show:
@@ -463,12 +463,14 @@ class Specie:
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
 
+
+EXPERIMENT_PATH = "./tmp/CART/"
 def main():
     p = Population(50, (4,1), show=False)
     p.run()
     if p.done:
         new_env = gym.make('CartPole-v1', render_mode='human')
         p.champion.render_run(new_env)
-        p.champion.show()
+        p.champion.show(name=f"{EXPERIMENT_PATH}/champion")
 
 main()

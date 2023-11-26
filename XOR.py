@@ -182,7 +182,7 @@ class Genome:
         for n in [n for n in self.nodes if n.node_type == 'output']:
             n.node_layer = maxL+1
 
-    def show(self, hide_disabled=False):
+    def show(self, hide_disabled=False, name='example'):
         graph = nx.Graph()
         nt = VisualNetwork(notebook=True , cdn_resources='in_line',layout=True, directed=True)
         for n in self.nodes:
@@ -198,7 +198,7 @@ class Genome:
                         title=f"in:{c.innov_id}\nw:{c.weight}",\
                         hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
-        nt.show('example.html')
+        nt.show(f'{name}.html')
 
     def load_inputs(self, inputs):
         for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key=lambda x: x.node_id)), inputs):
@@ -272,7 +272,7 @@ def crossover(genome1:Genome, genome2:Genome):
 class Population:
     size = 50
     specie_target = 4
-    max_iterations = 100
+    max_iterations = 500
     threshold_step_size = 0.3
     problem_fitness_threshold = 15.5
 
@@ -427,13 +427,35 @@ class Specie:
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
 
 
-#INPUT = [[0,0], [0,1], [1,0], [1,1]]
+INPUT = [[0,0], [0,1], [1,0], [1,1]]
+OUTPUT = [0, 1, 1, 0]
+EXPERIMENT_PATH = './tmp/XOR/'
+TEST_RUNS = 100
+results = []
+for t in range(TEST_RUNS):
+    p = Population(50, INPUT, OUTPUT, (2,1))
+    p.run()
+    if p.done:
+        p.champion.show(name=f"{EXPERIMENT_PATH}test_passed_{t}")
+        print('test run ',t,' done')
+
+        results.append((True, p.generation))
+    else:
+        best_try = sorted(p.organisms, key=lambda x : x.fitness, reverse=True)[0]
+        best_try.show(name=f"{EXPERIMENT_PATH}/test_failed_{t}")
+
+        print('test run',t,' failed')
+        results.append((False, -1))
+
+print(f"Out of {TEST_RUNS} tests {len([r for r in results if r[0]])} succeeded. Average generations is {sum([r[1] for r in results if r[0]]) / len([r for r in results if r[0]])}")
+
+#INPUT = [[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
 #OUTPUT = [0, 1, 1, 0]
 #
 #TEST_RUNS = 100
 #results = []
 #for t in range(TEST_RUNS):
-#    p = Population(50, INPUT, OUTPUT, (2,1))
+#    p = Population(50, INPUT, OUTPUT, (3,1))
 #    p.run()
 #    if p.done:
 #        results.append((True, p.generation))
@@ -441,21 +463,3 @@ class Specie:
 #        results.append((False, -1))
 #
 #print(f"Out of {TEST_RUNS} tests {len([r for r in results if r[0]])} succeeded. Average generations is {sum([r[1] for r in results if r[0]]) / len([r for r in results if r[0]])}")
-
-
-
-
-INPUT = [[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
-OUTPUT = [0, 1, 1, 0]
-
-TEST_RUNS = 100
-results = []
-for t in range(TEST_RUNS):
-    p = Population(50, INPUT, OUTPUT, (3,1))
-    p.run()
-    if p.done:
-        results.append((True, p.generation))
-    else:
-        results.append((False, -1))
-
-print(f"Out of {TEST_RUNS} tests {len([r for r in results if r[0]])} succeeded. Average generations is {sum([r[1] for r in results if r[0]]) / len([r for r in results if r[0]])}")
