@@ -272,7 +272,7 @@ def crossover(genome1:Genome, genome2:Genome):
 class Population:
     size = 50
     specie_target = 4
-    max_iterations = 500
+    max_iterations = 100
     threshold_step_size = 0.3
     problem_fitness_threshold = 15.5
 
@@ -438,12 +438,10 @@ for t in range(TEST_RUNS):
     if p.done:
         p.champion.show(name=f"{EXPERIMENT_PATH}test_passed_{t}")
         print('test run ',t,' done')
-
         results.append((True, p.generation))
     else:
         best_try = sorted(p.organisms, key=lambda x : x.fitness, reverse=True)[0]
         best_try.show(name=f"{EXPERIMENT_PATH}/test_failed_{t}")
-
         print('test run',t,' failed')
         results.append((False, -1))
 

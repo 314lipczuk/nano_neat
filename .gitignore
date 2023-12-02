@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 lib
 __pycache__
+tmp
+.DS_Store
