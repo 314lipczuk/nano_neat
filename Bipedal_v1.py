@@ -371,7 +371,7 @@ class Population:
     def iteration(self):
         mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
         std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
-        print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species) )
+        print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
         self.speciate()
         self.calculate_fitness()
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)

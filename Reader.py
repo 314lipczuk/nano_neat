@@ -20,9 +20,14 @@ NAME = "LTGV3W"
 
 def main():
     selected = False
-    if len(sys.argv) > 0:
+    if len(sys.argv) == 2:
         gen = sys.argv[1]
         selected = True
+    if len(sys.argv) == 3:
+        gen= sys.argv[1]
+        NAME = sys.argv[2]
+        selected = True
+
     env = gym.make(ENVIRONMENT_NAME, render_mode='human')
     if selected:
         realname = f"{PATH}population_{NAME}_gen_{gen}.pkl"
