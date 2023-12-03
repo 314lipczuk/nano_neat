@@ -31,6 +31,7 @@ def main():
         gn = Genome.create_from_file(realname)
         print(gn)
         gn.render_run(env)
+        os.system(f"open {realname[:-3]}html")
 
 class Node:
     next_node_id=0

@@ -379,7 +379,7 @@ class Population:
                "\tmean:", "%.2f" % (mean - 30) ,
                "\tSpecies:", len(self.species), 
                "\tPopulation", len(self.organisms), 
-               "\Kill counter", len(Population.kill_counter), 
+               "\Kill counter", Population.kill_counter, 
                "\tthreshold:", "%.2f" % Specie.threshold)
 
         if self.organisms[0].fitness > Population.problem_fitness_threshold:
