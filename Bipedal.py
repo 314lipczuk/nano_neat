@@ -333,6 +333,7 @@ def crossover(genome1:Genome, genome2:Genome):
 
 class Population:
     size = 50
+    kill_counter = 0
     specie_target = 4
     max_iterations = 2000
     threshold_step_size = 0.3
@@ -347,7 +348,8 @@ class Population:
         self.species = []
         self.generation = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        os.mkdir(f"{EXPERIMENT_NAME}/{self.serial_number}")
+        self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
+        os.mkdir(self.path)
         print(f"Starting experiment {self.serial_number}")
         self.done = False
         Population.size = size
@@ -385,9 +387,9 @@ class Population:
             return
         else:
             if self.generation % 10 == 0 and self.generation != 0:
-                name = f"population_{self.serial_number}_gen_{self.generation}"
-                self.organisms[0].show(name=f"{EXPERIMENT_NAME}/architectures/{name}")
-                pickle.dump(self.organisms[0], open(f"{EXPERIMENT_NAME}/models/{name}.pkl", "wb"))
+                name = f"gen_{self.generation}"
+                self.organisms[0].show(name=f"{self.path}/{name}")
+                pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
                 print(f"Saved model {name}")
         self.calculate_offspring()
         self.crossover()
