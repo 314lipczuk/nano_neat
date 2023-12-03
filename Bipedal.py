@@ -427,7 +427,7 @@ class Population:
 
         while len(new_population) < Population.size:
             rs = random.choices(self.species, weights=[s.offspring for s in self.species], k=1)[0]
-            o1, o2 = random.choices(rs.organisms, weights=[o.fitness for o in rs.organisms], k=2)
+            o1, o2 = random.choices(rs.organisms, weights=[max(o.fitness, 0.01) for o in rs.organisms], k=2)
             new_population.append(crossover(o1,o2))
         self.organisms = new_population
         # OLD
