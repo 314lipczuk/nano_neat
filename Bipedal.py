@@ -1,4 +1,3 @@
-import torch
 import string
 import copy
 import math
@@ -347,6 +346,7 @@ class Population:
         self.organisms = []
         self.species = []
         self.generation = 0
+        self.kill_counter = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
         os.mkdir(self.path)
@@ -379,6 +379,7 @@ class Population:
                "\tmean:", "%.2f" % (mean - 30) ,
                "\tSpecies:", len(self.species), 
                "\tPopulation", len(self.organisms), 
+               "\Kill counter", len(Population.kill_counter), 
                "\tthreshold:", "%.2f" % Specie.threshold)
 
         if self.organisms[0].fitness > Population.problem_fitness_threshold:
@@ -413,6 +414,7 @@ class Population:
             s.offspring = max([math.floor( (s.average * Population.size) / total_average ),1  ])
             if s.gens_since_improvement >= 15:
                 s.offspring = 0
+                Population.kill_counter += 1
                 print('\n\n\n######\nkilled specie', s.id)
         print(f"total offspring: {sum([s.offspring for s in self.species])}")
             #print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")

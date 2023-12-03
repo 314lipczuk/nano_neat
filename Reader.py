@@ -15,31 +15,22 @@ I want to open an organism from a running experiment and see how it works
 
 ENVIRONMENT_NAME = 'BipedalWalker-v3'
 EXPERIMENT_NAME = './tmp/BIPEDAL'
-PATH = f"{EXPERIMENT_NAME}/models/"
-NAME = "LTGV3W"
-
 def main():
     selected = False
     if len(sys.argv) == 2:
         gen = sys.argv[1]
         selected = True
     if len(sys.argv) == 3:
-        gen= sys.argv[1]
-        NAME = sys.argv[2]
+        gen= sys.argv[2]
+        NAME = sys.argv[1]
         selected = True
 
     env = gym.make(ENVIRONMENT_NAME, render_mode='human')
     if selected:
-        realname = f"{PATH}population_{NAME}_gen_{gen}.pkl"
+        realname = f"{EXPERIMENT_NAME}/{NAME}/gen_{gen}.pkl"
         gn = Genome.create_from_file(realname)
         print(gn)
         gn.render_run(env)
-    else:
-        all_results = os.listdir(PATH)
-        genomes = [(Genome.create_from_file(f"{PATH}/{f}"), f) for f in all_results]
-        for g,gn in genomes:
-            print(gn)
-            g.render_run(env)
 
 class Node:
     next_node_id=0
