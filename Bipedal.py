@@ -414,7 +414,7 @@ class Population:
         for s in self.species:
             #s.offspring = math.floor((s.average / total_average) * s.n) #Population.size
             #s.offspring = max([math.floor( (s.average * len(s.organisms)) / total_average ),1  ])
-            s.offspring = min(max(math.floor( (s.average * Population.size) / total_average ) , 0), Population.size)
+            s.offspring = min(max( math.floor( (s.average * Population.size) / total_average ) , 0), Population.size)
             #if s.gens_since_improvement >= 15:
             #    s.offspring = 0
             #    Population.kill_counter += 1
@@ -424,7 +424,7 @@ class Population:
 
     def crossover(self):
         new_population = []
-        PERCENT_BEST_TO_KEEP_FOR_RERODUCTION = 0.3
+        PERCENT_BEST_TO_KEEP_FOR_RERODUCTION = 0.5
         if True: #TODO add check for elitism
             # elitism - for each specie, take 1 best organism
             for s in self.species:

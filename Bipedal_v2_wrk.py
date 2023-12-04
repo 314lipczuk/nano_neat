@@ -1,4 +1,6 @@
+import torch
 import os
+import string
 import copy
 import math
 import random
@@ -6,36 +8,26 @@ import networkx as nx
 import gymnasium as gym
 from pyvis.network import Network as VisualNetwork
 import pickle
-import sys
 
 """
-Problem: reader
-I want to open an organism from a running experiment and see how it works
+Problem: bipedal walker
+MAX achieved = 30
+acrobot and cartpole turned out too simple, so we are trying with this one.
+Potential hurdles:
+- representing Box2d for network? 
+- here i will actually test my recurrent implementation
+- will it or won't it go toward some sensible solution( both in topology and weights )
 """
 
 ENVIRONMENT_NAME = 'BipedalWalker-v3'
 EXPERIMENT_NAME = './tmp/BIPEDAL'
 def main():
-    selected = False
-    if len(sys.argv) == 2:
-        file = sys.argv[1]
-        selected = True
-        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-        realname = f"{file}.pkl"
-        gn = Genome.create_from_file(realname)
-        print(gn)
-        gn.render_run(env)
-        #os.system(f"open {realname[:-3]}html")
-
-    if len(sys.argv) == 3:
-        gen= sys.argv[2]
-        NAME = sys.argv[1]
-        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-        realname = f"{EXPERIMENT_NAME}/{NAME}/gen_{gen}.pkl"
-        gn = Genome.create_from_file(realname)
-        print(gn)
-        gn.render_run(env)
-        os.system(f"open {realname[:-3]}html")
+    p = Population(50, (24, 4), show=False)
+    p.run()
+    if p.done:
+        new_env = gym.make(ENVIRONMENT_NAME, render_mode='human')
+        p.champion.render_run(new_env)
+        p.champion.show(name=f"{EXPERIMENT_NAME}/champion")
 
 class Node:
     next_node_id=0
@@ -95,12 +87,6 @@ class Genome:
     chance_to_reactivate_disabled_connection = 0.25
     allowRecurrent = True
 
-    @staticmethod
-    def create_from_file(path):
-        f = pickle.load(open(path, 'rb'))
-        return f
-
-
     def __init__(self, inputN, outputN):
         self.nodes = []
         self.connections = []
@@ -112,7 +98,7 @@ class Genome:
         
         for i in [i for i in self.nodes if i.node_type == 'input']:
             for o in [o for o in self.nodes if o.node_type == 'output']:
-                self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
+                self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.uniform(-1,1)))
         self.refresh_layers()
 
 
@@ -186,6 +172,7 @@ class Genome:
             if x < -1:
                 value = -1
         return value
+
         #x = i
         #return 1 / (1+math.exp(-x))
 
@@ -286,25 +273,26 @@ class Genome:
     def calculate_fitness(self, environment: gym.Env):
         observation,info = environment.reset()
         done = False       
-        # take in observations
         fin_reward = 0
+        not_moving_counter = 0
         while not done:
             self.load_inputs(observation)
             self.run_network()
             output = self.get_output()
             assert(len(output) == 4)
             action = output
+            #ja pierdole to działa?????
             observation, reward, terminated, truncated, info = environment.step(action)
             if reward < 0.01:
                 not_moving_counter += 1
                 if not_moving_counter > 30:
-                    pass
-                    #done = True
+                    done = True
             else:
                 not_moving_counter = 0
             fin_reward += reward
             if terminated or truncated:
                 done = True
+                #observation, info = environment.reset()
         self.fitness = fin_reward
         """
         results = []
@@ -321,8 +309,7 @@ class Genome:
         observation, info = environment.reset()
         done = False       
         # take in observations
-        fin_reward= 0
-        not_moving_counter = 0
+        final_reward = 0
         environment.render()
         while not done:
             self.load_inputs(observation)
@@ -331,18 +318,11 @@ class Genome:
             assert(len(output) == 4)
             action = output
             observation, reward, terminated, truncated, info = environment.step(action)
-            print(reward,"\t", fin_reward ,'\t',not_moving_counter ,  terminated, truncated)
-            if reward < 0.01:
-                not_moving_counter += 1
-                if not_moving_counter > 30:
-                    pass
-                    done = True
-            else:
-                not_moving_counter = 0
-            fin_reward += reward
-            if terminated or truncated:
+            final_reward += reward
+            if  terminated or truncated:
                 done = True
-        print(f"Fitness of running organism: {fin_reward}")
+                observation, info = environment.reset()
+        print(f"Fitness of running organism: {final_reward}")
 
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
@@ -372,9 +352,9 @@ def crossover(genome1:Genome, genome2:Genome):
 class Population:
     size = 50
     specie_target = 4
-    max_iterations = 200
+    max_iterations = 2000
     threshold_step_size = 0.3
-    problem_fitness_threshold = 250
+    problem_fitness_threshold = 290
 
     def __init__(self, size, genome, show=False, model=ENVIRONMENT_NAME):
         if show:
@@ -384,6 +364,10 @@ class Population:
         self.organisms = []
         self.species = []
         self.generation = 0
+        self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
+        os.mkdir(self.path)
+        print(f"Starting experiment {self.serial_number}")
         self.done = False
         Population.size = size
         Population.threshold_step_size = 0.3
@@ -398,7 +382,9 @@ class Population:
             o.calculate_fitness(self.env)
 
     def iteration(self):
-        print("Generation", self.generation, "Best fitness", self.organisms[0].fitness)
+        mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
+        print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
         self.speciate()
         self.calculate_fitness()
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
@@ -406,6 +392,13 @@ class Population:
             self.done = True
             self.champion = self.organisms[0]
             return
+        else:
+            if self.generation % 10 == 0 and self.generation != 0:
+                name = f"gen_{self.generation}"
+                self.organisms[0].show(name=f"{self.path}/{name}")
+                pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
+                print(f"Saved model {name}")
+
         self.calculate_offspring()
         self.crossover()
 
@@ -415,11 +408,8 @@ class Population:
             self.generation += 1
         if self.done:
             print("Done")
-            #print("Champion", self.champion.fitness)
-            #self.champion.show()
         else:
             print("Did not find solution in {} iterations".format(Population.max_iterations))
-            #print(f"Species:, {len(self.species)}")
 
     def calculate_offspring(self):
         for s in self.species:
@@ -438,12 +428,11 @@ class Population:
         OUT_OF_SPECIE_MODIFIER = 0.3
         if True: #TODO add check for elitism
             # top 5% of population goes to next generation
-            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.05)] 
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.1)] 
             for b in best: new_population.append(copy.deepcopy(b))
 
         for s in self.species:
             specie_counter = 0
-
             choices = []
             weights = []
             for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms)), 1)] ]:
@@ -524,6 +513,4 @@ class Specie:
 
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
-
-
 main()
