@@ -1,4 +1,5 @@
 import torch
+import os
 import string
 import copy
 import math
@@ -97,7 +98,7 @@ class Genome:
         
         for i in [i for i in self.nodes if i.node_type == 'input']:
             for o in [o for o in self.nodes if o.node_type == 'output']:
-                self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.random()))
+                self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.uniform(-1,1)))
         self.refresh_layers()
 
 
@@ -162,9 +163,18 @@ class Genome:
         if random.random() < Genome.chance_to_add_connection:
             self.mutate_add_connection()
 
-    def activation_function(self, i):
-        x = i
-        return 1 / (1+math.exp(-x))
+    def activation_function(self, x):
+        try:
+            value =  2/(1+math.exp(-5*x))-1
+        except OverflowError:
+            if x > 1:
+                value = 1
+            if x < -1:
+                value = -1
+        return value
+
+        #x = i
+        #return 1 / (1+math.exp(-x))
 
         #steepened sigmoid
         #x = torch.tensor(i)
@@ -271,6 +281,7 @@ class Genome:
             output = self.get_output()
             assert(len(output) == 4)
             action = output
+            #ja pierdole to działa?????
             observation, reward, terminated, truncated, info = environment.step(action)
             if reward < 0.01:
                 not_moving_counter += 1
@@ -354,6 +365,8 @@ class Population:
         self.species = []
         self.generation = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
+        os.mkdir(self.path)
         print(f"Starting experiment {self.serial_number}")
         self.done = False
         Population.size = size
@@ -381,9 +394,9 @@ class Population:
             return
         else:
             if self.generation % 10 == 0 and self.generation != 0:
-                name = f"population_{self.serial_number}_gen_{self.generation}"
-                self.organisms[0].show(name=f"{EXPERIMENT_NAME}/architectures/{name}")
-                pickle.dump(self.organisms[0], open(f"{EXPERIMENT_NAME}/models/{name}.pkl", "wb"))
+                name = f"gen_{self.generation}"
+                self.organisms[0].show(name=f"{self.path}/{name}")
+                pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
                 print(f"Saved model {name}")
 
         self.calculate_offspring()

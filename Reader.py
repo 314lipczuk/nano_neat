@@ -18,15 +18,19 @@ EXPERIMENT_NAME = './tmp/BIPEDAL'
 def main():
     selected = False
     if len(sys.argv) == 2:
-        gen = sys.argv[1]
+        file = sys.argv[1]
         selected = True
+        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
+        realname = f"{file}.pkl"
+        gn = Genome.create_from_file(realname)
+        print(gn)
+        gn.render_run(env)
+        #os.system(f"open {realname[:-3]}html")
+
     if len(sys.argv) == 3:
         gen= sys.argv[2]
         NAME = sys.argv[1]
-        selected = True
-
-    env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-    if selected:
+        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
         realname = f"{EXPERIMENT_NAME}/{NAME}/gen_{gen}.pkl"
         gn = Genome.create_from_file(realname)
         print(gn)
@@ -173,9 +177,17 @@ class Genome:
         if random.random() < Genome.chance_to_add_connection:
             self.mutate_add_connection()
 
-    def activation_function(self, i):
-        x = i
-        return 1 / (1+math.exp(-x))
+    def activation_function(self, x):
+        try:
+            value =  2/(1+math.exp(-5*x))-1
+        except OverflowError:
+            if x > 1:
+                value = 1
+            if x < -1:
+                value = -1
+        return value
+        #x = i
+        #return 1 / (1+math.exp(-x))
 
         #steepened sigmoid
         #x = torch.tensor(i)
