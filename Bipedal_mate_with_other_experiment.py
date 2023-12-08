@@ -1,7 +1,8 @@
+import torch
+import os
 import string
 import copy
 import math
-import os
 import random
 import networkx as nx
 import gymnasium as gym
@@ -10,6 +11,7 @@ import pickle
 
 """
 Problem: bipedal walker
+MAX achieved = 30
 acrobot and cartpole turned out too simple, so we are trying with this one.
 Potential hurdles:
 - representing Box2d for network? 
@@ -19,8 +21,6 @@ Potential hurdles:
 
 ENVIRONMENT_NAME = 'BipedalWalker-v3'
 EXPERIMENT_NAME = './tmp/BIPEDAL'
-
-DYNAMIC_THRESHOLD =False
 def main():
     p = Population(50, (24, 4), show=False)
     p.run()
@@ -42,7 +42,7 @@ class Node:
     def __repr__(self):
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
-    @staticmethod
+    @staticmethod #working
     def get_node_id(genome):
         return len(genome.nodes)
 
@@ -153,6 +153,7 @@ class Genome:
             else:
                 c.weight = random.uniform(-1, 1)
     def mutate(self):
+        r = random.random()
         if random.random() < Genome.chance_mutate_weight:
             self.mutate_weights()
 
@@ -205,6 +206,16 @@ class Genome:
                 r.enabled = False
             elif in_node.node_layer < out_node.node_layer:
                 r.is_recurrent = False
+        """
+        what do do with recurrent connections?
+        layers shuffled >>= [for r in recurrent: check]
+        check = if in_node.layer 
+
+        where do i need to change things?
+        - refresh_layers
+        - add_connection
+        - reenable connection (check if layers are good before reenabling)
+        """
 
     def show(self, hide_disabled=False, name='example'):
         graph = nx.Graph()
@@ -235,6 +246,7 @@ class Genome:
             nodes = [n for n in self.nodes if n.node_layer == l]
             for n in nodes:
                 conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
+                #n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
                 n.sum_input = 0
                 for c in conns:
                     n.sum_input += c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output
@@ -256,9 +268,7 @@ class Genome:
         b = [n.weight for n in sorted(other.connections, key=lambda x: x.innov_id) if n.innov_id in common]
 
         weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / max(len(a), 1)
-        result = Genome.C1 * excess_count + Genome.C2 * disjoint_count + Genome.C3 * weight_diff
-        #print('cd', result)
-        return result
+        return Genome.C1 * excess_count + Genome.C2 * disjoint_count + Genome.C3 * weight_diff
     
     def calculate_fitness(self, environment: gym.Env):
         observation,info = environment.reset()
@@ -271,6 +281,7 @@ class Genome:
             output = self.get_output()
             assert(len(output) == 4)
             action = output
+            #ja pierdole to działa?????
             observation, reward, terminated, truncated, info = environment.step(action)
             if reward < 0.01:
                 not_moving_counter += 1
@@ -281,11 +292,23 @@ class Genome:
             fin_reward += reward
             if terminated or truncated:
                 done = True
+                #observation, info = environment.reset()
         self.fitness = fin_reward
+        """
+        results = []
+        for i, o in zip(inputs, expected_outputs):
+            self.load_inputs(i)
+            self.run_network()
+            output = self.get_output()[0]
+            results.append((o, output ))
+        error = sum( [abs( r - o ) for o, r in results] )
+        self.fitness = round((4 - error) ** 2, 2)
+        """
 
     def render_run(self, environment: gym.Env):
         observation, info = environment.reset()
         done = False       
+        # take in observations
         final_reward = 0
         environment.render()
         while not done:
@@ -325,12 +348,13 @@ def crossover(genome1:Genome, genome2:Genome):
     prototype.mutate()
     return prototype
 
+
 class Population:
     size = 50
-    specie_target = 5
+    specie_target = 4
     max_iterations = 2000
     threshold_step_size = 0.3
-    problem_fitness_threshold = 330
+    problem_fitness_threshold = 290
 
     def __init__(self, size, genome, show=False, model=ENVIRONMENT_NAME):
         if show:
@@ -340,7 +364,6 @@ class Population:
         self.organisms = []
         self.species = []
         self.generation = 0
-        self.kill_counter = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
         os.mkdir(self.path)
@@ -351,43 +374,21 @@ class Population:
         g = Genome(genome[0], genome[1])
         self.default_genome = g
         for _ in range(size+1):
-            tmp = copy.deepcopy(g)
-            tmp.mutate_weights()
-            self.organisms.append(tmp)
+            self.organisms.append(copy.deepcopy(g))
         self.speciate()
 
     def calculate_fitness(self):
         for o in self.organisms:
             o.calculate_fitness(self.env)
-    
-    def pretty_print(self):
-        print("\nGeneration ",self.serial_number, self.generation,"\nmax_F:%2f" % (self.organisms[0].fitness ),
-               "\tmean_F:%2f" % (sum([o.fitness for o in self.organisms]) / len(self.organisms)),
-               "\tthreshold:", "%.2f" % Specie.threshold,
-               "\nSpecies:\n") 
-        print('\n'.join([s.__repr__() for s in self.species]))
 
     def iteration(self):
         mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
         std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
-        avg_nodes = sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)
-        avg_conns = sum([len(o.connections) for o in self.organisms]) / len(self.organisms)
+        print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
         self.speciate()
         self.calculate_fitness()
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
-        self.pretty_print()
-        #print("Gen", self.generation,"\n",
-        #       "fitness:", "%.2f" %(self.organisms[0].fitness - 30),
-        #       "\tmean:", "%.2f" % (mean - 30) ,
-        #       "\tSpecies:", len(self.species), 
-        #       "\tPopulation", len(self.organisms), 
-        #       "\tavg nodes", avg_nodes, 
-        #       "\tPopulation", len(self.organisms), 
-        #       "\tthreshold:", "%.2f" % Specie.threshold)
-        #print([(x.alive, x.gens_since_improvement) for x in self.species])
-        if self.organisms[0].fitness > Population.problem_fitness_threshold:
-            self.done = True
-            self.champion = self.organisms[0]
+        if self.done
             return
         else:
             if self.generation % 10 == 0 and self.generation != 0:
@@ -395,13 +396,14 @@ class Population:
                 self.organisms[0].show(name=f"{self.path}/{name}")
                 pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
                 print(f"Saved model {name}")
+
         self.calculate_offspring()
         self.crossover()
-        self.generation += 1
 
     def run(self):
         while self.done == False and self.generation < Population.max_iterations:
             self.iteration()
+            self.generation += 1
         if self.done:
             print("Done")
         else:
@@ -413,54 +415,44 @@ class Population:
         total_average = sum([s.average for s in self.species])
         for s in self.species:
             #s.offspring = math.floor((s.average / total_average) * s.n) #Population.size
-            #s.offspring = max([math.floor( (s.average * len(s.organisms)) / total_average ),1  ])
-            s.offspring = min(max( math.floor( (s.average * Population.size) / total_average ) , 0), Population.size)
-            #if s.gens_since_improvement >= 15:
-            #    s.offspring = 0
-            #    Population.kill_counter += 1
-            #)    print('\n\n\n######\nkilled specie', s.id)
-        print(f"total offspring: {sum([s.offspring for s in self.species])}")
+            s.offspring = math.floor((s.average / total_average) * Population.size) #Population.size
+            if s.gens_since_improvement >= 15:
+                s.offspring = 0
             #print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
 
     def crossover(self):
         new_population = []
-        PERCENT_BEST_TO_KEEP_FOR_RERODUCTION = 0.5
+        counter = 0
+        OUT_OF_SPECIE_MODIFIER = 0.3
         if True: #TODO add check for elitism
-            # elitism - for each specie, take 1 best organism
-            for s in self.species:
-                if s.offspring == 0: continue
-                # here check if maybe specie is not improving for a long time, then kill it
-                best = sorted(s.organisms, key=lambda x:x.fitness, reverse=True)
-                #for i in range(max(len(best),1)):
-                #    new_population.append(best[i])
-                #new_population.append(best[0])
-                s.organisms = best[:max([math.floor(PERCENT_BEST_TO_KEEP_FOR_RERODUCTION * len(best)), 1])]
+            # top 5% of population goes to next generation
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.1)] 
+            for b in best: new_population.append(copy.deepcopy(b))
 
+        for s in self.species:
+            specie_counter = 0
+            choices = []
+            weights = []
+            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms)), 1)] ]:
+                choices.append(x)
+                weights.append(x.fitness if x.fitness > 0 else (- 1 / x.fitness) )
+
+            for x in [x for x in sorted(self.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms) ), 1)] ]:
+                if x.fitness > 0:
+                    choices.append(x)
+                    weights.append(x.fitness * OUT_OF_SPECIE_MODIFIER)
+
+            while specie_counter < s.offspring:
+                g1, g2 = random.choices(choices, weights=weights, k=2)
+                new_population.append(crossover(g1,g2))
+                specie_counter+=1
         while len(new_population) < Population.size:
-            rs = random.choices(self.species, weights=[s.offspring for s in self.species], k=1)[0]
-            o1, o2 = random.choices(rs.organisms, weights=[max(o.fitness, 0.01) for o in rs.organisms], k=2)
-            new_population.append(crossover(o1,o2))
+            counter += 1
+            new_population.append(copy.deepcopy(self.default_genome))
+        #print(f"generation {self.generation} had {counter} zeroed genomes")
         self.organisms = new_population
-        # OLD
-        #for s in self.species:
-        #    specie_counter = 0
-        #    choices = []
-        #    weights = []
-        #    for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms)), 1)] ]:
-        #        choices.append(x)
-        #        weights.append(x.fitness if x.fitness > 0 else (- 1 / x.fitness) )
-
-        #    while specie_counter < s.offspring:
-        #        g1, g2 = random.choices(choices, weights=weights, k=2)
-        #        new_population.append(crossover(g1,g2))
-        #        specie_counter+=1
-        #while len(new_population) < Population.size:
-        #    counter += 1
-        #    new_population.append(copy.deepcopy(self.default_genome))
 
     def speciate(self):
-        DYNAMIC_THRESHOLD = False
-
         for s in self.species:
             s.clear_members()
 
@@ -478,31 +470,22 @@ class Population:
         for s in self.species: 
             s.representative = random.choice(s.organisms)
 
-        if DYNAMIC_THRESHOLD:
-            if len(self.species) < Population.specie_target:
-                Specie.threshold -= Population.threshold_step_size
-            if len(self.species) > Population.specie_target:
-                Specie.threshold += Population.threshold_step_size
-
-        #nw_threshold = Specie.threshold if len(self.species) == Population.specie_target \
-        #    else Specie.threshold - Population.threshold_step_size if len(self.species)< Population.specie_target\
+        #setting new threshold to adjust specie size
+        #specie_size = len(self.species)
+        #new_threshold = Specie.threshold if specie_size == Population.specie_target \
+        #    else Specie.threshold - Population.threshold_step_size if specie_size < Population.specie_target\
         #    else Specie.threshold + Population.threshold_step_size
         #Specie.threshold = new_threshold
 
 class Specie:
     threshold = 3
-    use_max_instead_of_avg = False
-
-    def __repr__(self):
-        return f"Specie:{self.id}\tage:{self.alive:03}\t size:{len(self.organisms):03}\tavg_f:{round(self.average, 2):03}\tavg nodes:{round(sum([len(o.nodes) for o in self.organisms]) / len(self.organisms),2):03}"
-
+    use_adjusted_fitness=True
     def __init__(self, id, representative):
-        self.alive = 0
         self.id = id
         self.organisms = []
         self.representative =  representative
+        self.gens_since_improvement = 0
         self.average = 0
-        self.organisms.append(representative)
 
     def add_organism(self, organism):
         self.organisms.append(organism)
@@ -516,21 +499,18 @@ class Specie:
         self.organisms = []
     
     def calculate_stats(self):
-        self.alive += 1
-        self.calculate_adjusted_fitness()
-        if Specie.use_max_instead_of_avg:
-            # is it fitness or adjusted fitness tho??
-            self.average = max([o.fitness for o in self.organisms ])
-        else:
+        oldAvg = self.average
+        if Specie.use_adjusted_fitness:
+            self.calculate_adjusted_fitness()
             self.average = sum([o.adjusted_fitness for o in self.organisms]) / len(self.organisms)
-        #if self.average > self.oldAvg:
-        #self.max = max([o.adjusted_fitness for o in self.organisms])
-        #if self.max > self.oldMax:
-        #    self.gens_since_improvement = 0
-        #else:
-        #    self.gens_since_improvement += 1
-        #self.oldAvg = self.average
-        #self.oldMax = self.max
-        #self.n = len(self.organisms)
+        else:
+            self.average = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        if self.average >= oldAvg:
+            self.gens_since_improvement = 0
+        else:
+            self.gens_since_improvement += 1
+        self.n = len(self.organisms)
 
-if __name__ == "__main__":main()
+    def __repr__(self):
+        return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
+main()

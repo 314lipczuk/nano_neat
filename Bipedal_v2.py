@@ -281,7 +281,6 @@ class Genome:
             output = self.get_output()
             assert(len(output) == 4)
             action = output
-            #ja pierdole to działa?????
             observation, reward, terminated, truncated, info = environment.step(action)
             if reward < 0.01:
                 not_moving_counter += 1
@@ -292,18 +291,7 @@ class Genome:
             fin_reward += reward
             if terminated or truncated:
                 done = True
-                #observation, info = environment.reset()
         self.fitness = fin_reward
-        """
-        results = []
-        for i, o in zip(inputs, expected_outputs):
-            self.load_inputs(i)
-            self.run_network()
-            output = self.get_output()[0]
-            results.append((o, output ))
-        error = sum( [abs( r - o ) for o, r in results] )
-        self.fitness = round((4 - error) ** 2, 2)
-        """
 
     def render_run(self, environment: gym.Env):
         observation, info = environment.reset()
@@ -364,6 +352,7 @@ class Population:
         self.organisms = []
         self.species = []
         self.generation = 0
+        self.total_adjusted_fitness = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.path = f"{EXPERIMENT_NAME}/{self.serial_number}"
         os.mkdir(self.path)
@@ -414,45 +403,56 @@ class Population:
     def calculate_offspring(self):
         for s in self.species:
             s.calculate_stats()
-        total_average = sum([s.average for s in self.species])
+        total_average = sum([o.adjusted_fitness for o in self.organisms])
         for s in self.species:
-            #s.offspring = math.floor((s.average / total_average) * s.n) #Population.size
-            s.offspring = math.floor((s.average / total_average) * Population.size) #Population.size
+            proportion = s.total_adjusted_fitness / total_average 
+            s.offspring = round(proportion * Population.size) #Population.size
             if s.gens_since_improvement >= 15:
                 s.offspring = 0
-            #print(f"Specie {s.id}, pop:${len(s.organisms)}, avg f{round(s.average, 3)} has {s.offspring} offspring when total av is ${round(total_average, 3)}")
 
     def crossover(self):
         new_population = []
         counter = 0
-        OUT_OF_SPECIE_MODIFIER = 0.3
-        if True: #TODO add check for elitism
+        TOP_PROC_TO_REPRODUCE = 0.2
+
+        CROSS_SPECIE_REPRODUCTION = True
+        CROSS_SPECIE_WEIGHT_MODIFIER = 0.3
+
+        ELITISM = True
+        ELITISM_PERCENTAGE = 0.05
+
+        if ELITISM:
             # top 5% of population goes to next generation
-            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * 0.1)] 
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * ELITISM_PERCENTAGE)] 
             for b in best: new_population.append(copy.deepcopy(b))
 
         for s in self.species:
             specie_counter = 0
             choices = []
             weights = []
-            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[:max(math.floor(0.2 * len(s.organisms)), 1)] ]:
+            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[: max(math.floor(TOP_PROC_TO_REPRODUCE * len(s.organisms)), 1)] ]:
                 choices.append(x)
                 weights.append(x.fitness if x.fitness > 0 else (- 1 / x.fitness) )
-            #for x in [x for x in sorted(self.organisms, key=lambda f:f.fitness, reverse=True)[math.floor(0.2 * len(s.organisms) ):] ]:
-            #    choices.append(x)
-            #    weights.append(x.fitness * OUT_OF_SPECIE_MODIFIER)
+
+            if CROSS_SPECIE_REPRODUCTION:
+                for x in [x for x in sorted(self.organisms, key=lambda f:f.fitness, reverse=True)[: max(math.floor(0.2 * len(s.organisms) ), 1)] ]:
+                    if x.fitness > 0:
+                        choices.append(x)
+                        weights.append( x.fitness * CROSS_SPECIE_WEIGHT_MODIFIER)
 
             while specie_counter < s.offspring:
                 g1, g2 = random.choices(choices, weights=weights, k=2)
                 new_population.append(crossover(g1,g2))
-                specie_counter+=1
+                specie_counter += 1
+
         while len(new_population) < Population.size:
             counter += 1
             new_population.append(copy.deepcopy(self.default_genome))
-        #print(f"generation {self.generation} had {counter} zeroed genomes")
         self.organisms = new_population
 
     def speciate(self):
+        DYNAMIC_THRESHOLD =True
+
         for s in self.species:
             s.clear_members()
 
@@ -471,21 +471,23 @@ class Population:
             s.representative = random.choice(s.organisms)
 
         #setting new threshold to adjust specie size
-        #specie_size = len(self.species)
-        #new_threshold = Specie.threshold if specie_size == Population.specie_target \
-        #    else Specie.threshold - Population.threshold_step_size if specie_size < Population.specie_target\
-        #    else Specie.threshold + Population.threshold_step_size
-        #Specie.threshold = new_threshold
+        if DYNAMIC_THRESHOLD:
+            if len(self.species) < Population.specie_target:
+                Specie.threshold -= Population.threshold_step_size
+            if len(self.species) > Population.specie_target:
+                Specie.threshold += Population.threshold_step_size
+        assert sum(len(s.organisms) for s in self.species) == len(self.organisms)
 
 class Specie:
     threshold = 3
     use_adjusted_fitness=True
     def __init__(self, id, representative):
         self.id = id
-        self.organisms = []
+        self.organisms = [representative]
         self.representative =  representative
         self.gens_since_improvement = 0
         self.average = 0
+        self.total_adjusted_fitness = 0
 
     def add_organism(self, organism):
         self.organisms.append(organism)
@@ -499,17 +501,18 @@ class Specie:
         self.organisms = []
     
     def calculate_stats(self):
-        oldAvg = self.average
-        if Specie.use_adjusted_fitness:
-            self.calculate_adjusted_fitness()
-            self.average = sum([o.adjusted_fitness for o in self.organisms]) / len(self.organisms)
-        else:
-            self.average = sum([o.fitness for o in self.organisms]) / len(self.organisms)
-        if self.average >= oldAvg:
-            self.gens_since_improvement = 0
-        else:
-            self.gens_since_improvement += 1
-        self.n = len(self.organisms)
+        self.calculate_adjusted_fitness()
+        self.total_adjusted_fitness = sum([o.adjusted_fitness for o in self.organisms])
+        #if Specie.use_adjusted_fitness:
+        #    self.calculate_adjusted_fitness()
+        #    self.average = sum([o.adjusted_fitness for o in self.organisms]) / len(self.organisms)
+        #else:
+        #    self.average = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        #if self.average >= oldAvg:
+        #    self.gens_since_improvement = 0
+        #else:
+        #    self.gens_since_improvement += 1
+        #self.n = len(self.organisms)
 
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
