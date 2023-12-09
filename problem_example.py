@@ -1,5 +1,6 @@
-from model import Population, Config, Genome , Specie
+from model import Population, Config, Genome , Specie, Initialize
 import gymnasium as gym
+import math
 
 def activation_function(self, x):
     try:
@@ -59,6 +60,7 @@ def display(self:Genome):
     
 
 c = Config(activation=activation_function, display=display, fitness=calculate_fitness, input_size=28, output_size=4 )
+Initialize(c)
 p = Population()
 Population.env = gym.make(ENVIRONMENT_NAME, render_mode='none')
 p.run()

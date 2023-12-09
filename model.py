@@ -24,7 +24,9 @@ class Config:
     ,input_size
     ,output_size
     ,initialization_function = lambda x : x
-    ,C1=1,C2=1,C3=0.4
+    ,C1=1,
+    C2=1,
+    C3=0.4
     ,chance_mutate_weight = 0.8
     ,chance_of_20p_weight_change = 0.9
     ,chance_of_new_random_weight = 0.1
@@ -61,8 +63,8 @@ class Config:
         self.fitness = fitness
         self.input_size = input_size
         self.output_size = output_size
-        self.C1=C1,
-        self.C2=C2,
+        self.C1=C1
+        self.C2=C2
         self.C3=C3
         self.chance_mutate_weight = chance_mutate_weight
         self.chance_of_20p_weight_change = chance_of_20p_weight_change 
@@ -151,6 +153,11 @@ class Genome:
         self.refresh_layers()
     
     def save(self):
+        name = f"gen_{self.generation}"
+        chosen = self.organisms[0]
+        path = f"{self.path}/{name}"
+        pickle.dump(self, open(f"{self.path}/{name}.pkl", "wb"))
+        print('saved')
 
 
 
@@ -396,7 +403,7 @@ class Population:
         self.done = False
         g = Genome(Population.input_size, Population.output_size)
         self.default_genome = g
-        for _ in range(size+1):
+        for _ in range(Population.size+1):
             self.organisms.append(copy.deepcopy(g))
         self.speciate()
 
@@ -536,7 +543,7 @@ def Initialize(config:Config):
     global Specie
 
     Genome.activation_function = config.activation
-    Genome.show = config.display
+    Genome.show = config.show
     Genome.calculate_fitness = config.fitness
     Population.input_size = config.input_size
     Population.output_size = config.output_size
@@ -564,5 +571,8 @@ def Initialize(config:Config):
     Population.CROSS_SPECIE_WEIGHT_MODIFIER =config.CROSS_SPECIE_WEIGHT_MODIFIER
     Population.ELITISM =config.ELITISM
     Population.ELITISM_PERCENTAGE =config.ELITISM_PERCENTAGE
+
+
+    Population.DYNAMIC_THRESHOLD = config.DYNAMIC_THRESHOLD
 
     Specie.threshold = config.INITIAL_THRESHOLD
