@@ -9,88 +9,21 @@ import gymnasium as gym
 from pyvis.network import Network as VisualNetwork
 import pickle
 
-#ENVIRONMENT_NAME = 'BipedalWalker-v3'
-#EXPERIMENT_NAME = './tmp/BIPEDAL'
 """
-Model exposes simple api. It takes in activation function, fitness function, and display function (in the future maybe also aggregation function)
-It only needs to expose basic population api and way to specify hyperparameters
+Previous (Bipedal V2) was mostly able to solve walk problem (the easy one), but only in some configurations. 
+I did find and eliminate THE bug, so that's nice. But i still need a better activation function with a sensible stopping condition.
+So that's V3's raison d'etre.
 """
 
-class Config:
-    def __init__(self,
-     activation
-    ,display
-    ,fitness
-    ,input_size
-    ,output_size
-    ,initialization_function = lambda x : x
-    ,C1=1,
-    C2=1,
-    C3=0.4
-    ,chance_mutate_weight = 0.8
-    ,chance_of_20p_weight_change = 0.9
-    ,chance_of_new_random_weight = 0.1
-    ,chance_to_add_connection = 0.05
-    ,chance_to_add_node= 0.05
-    ,tries_to_make_connections = 20
-    ,chance_to_reactivate_disabled_connection = 0.25
-    ,allowRecurrent = True
-    ,size = 50
-    ,specie_target = 4
-    ,max_iterations = 2000
-    ,threshold_step_size = 0.3
-    ,problem_fitness_threshold = 290
-
-    ,TOP_PROC_TO_REPRODUCE = 0.2
-
-    ,CROSS_SPECIE_REPRODUCTION = True
-    ,CROSS_SPECIE_WEIGHT_MODIFIER = 0.3
-
-    ,ELITISM = True
-    ,ELITISM_PERCENTAGE = 0.05
-
-    ,DYNAMIC_THRESHOLD =True
-    ,INITIAL_THRESHOLD = 3
-     ):
-        assert activation is not None
-        assert display is not None
-        assert fitness is not None
-        assert input_size is not None
-        assert output_size is not None
-        self.activation = activation
-        self.initialization_function = initialization_function
-        self.show = display
-        self.fitness = fitness
-        self.input_size = input_size
-        self.output_size = output_size
-        self.C1=C1
-        self.C2=C2
-        self.C3=C3
-        self.chance_mutate_weight = chance_mutate_weight
-        self.chance_of_20p_weight_change = chance_of_20p_weight_change 
-        self.chance_of_new_random_weight = chance_of_new_random_weight 
-        self.chance_to_add_connection = chance_to_add_connection 
-        self.chance_to_add_node = chance_to_add_node 
-        self.tries_to_make_connections = tries_to_make_connections 
-        self.chance_to_reactivate_disabled_connection = chance_to_reactivate_disabled_connection 
-        self.allowRecurrent = allowRecurrent 
-        self.size = size
-        self.specie_target = specie_target 
-        self.max_iterations = max_iterations
-        self.threshold_step_size =threshold_step_size 
-        self.problem_fitness_threshold = problem_fitness_threshold 
-
-        self.TOP_PROC_TO_REPRODUCE = TOP_PROC_TO_REPRODUCE 
-
-        self.CROSS_SPECIE_REPRODUCTION = CROSS_SPECIE_REPRODUCTION 
-        self.CROSS_SPECIE_WEIGHT_MODIFIER = CROSS_SPECIE_WEIGHT_MODIFIER 
-
-        self.ELITISM = ELITISM
-        self.ELITISM_PERCENTAGE = ELITISM_PERCENTAGE 
-
-        self.DYNAMIC_THRESHOLD = DYNAMIC_THRESHOLD 
-        self.INITIAL_THRESHOLD = INITIAL_THRESHOLD 
-
+ENVIRONMENT_NAME = 'BipedalWalker-v3'
+EXPERIMENT_NAME = './tmp/BIPEDAL'
+def main():
+    p = Population(50, (24, 4), show=False)
+    p.run()
+    if p.done:
+        new_env = gym.make(ENVIRONMENT_NAME, render_mode='human')
+        p.champion.render_run(new_env)
+        p.champion.show(name=f"{EXPERIMENT_NAME}/champion")
 
 class Node:
     next_node_id=0
@@ -105,7 +38,7 @@ class Node:
     def __repr__(self):
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
-    @staticmethod #working
+    @staticmethod
     def get_node_id(genome):
         return len(genome.nodes)
 
@@ -113,12 +46,12 @@ class Connection:
     next_innov_id=0
     innov_table = {}
     def __init__(self, innov_id, in_node, out_node, weight=1.0, enabled=True, is_recurrent=False):
-        self.innov_id = innov_id
-        self.in_node = in_node
-        self.out_node = out_node
-        self.weight = weight
-        self.enabled = enabled
-        self.is_recurrent = is_recurrent
+        self.innov_id=innov_id
+        self.in_node=in_node
+        self.out_node=out_node
+        self.weight=weight
+        self.enabled=enabled
+        self.is_recurrent=is_recurrent
 
     def __hash__(self):
         return hash(self.innov_id)
@@ -138,6 +71,18 @@ class Connection:
             return tmp
 
 class Genome:
+    C1 = 1
+    C2 = 1
+    C3 = 0.4
+    chance_mutate_weight = 0.8
+    chance_of_20p_weight_change = 0.9
+    chance_of_new_random_weight = 0.1
+    chance_to_add_connection = 0.05
+    chance_to_add_node= 0.05
+    tries_to_make_connections = 20
+    chance_to_reactivate_disabled_connection = 0.25
+    allowRecurrent = True
+
     def __init__(self, inputN, outputN):
         self.nodes = []
         self.connections = []
@@ -151,21 +96,6 @@ class Genome:
             for o in [o for o in self.nodes if o.node_type == 'output']:
                 self.connections.append(Connection(innov_id=Connection.get_innov_id((i.node_id, o.node_id)), in_node=i.node_id, out_node=o.node_id, weight=random.uniform(-1,1)))
         self.refresh_layers()
-
-
-    @staticmethod
-    def create_from_file(path):
-        f = pickle.load(open(path, 'rb'))
-        return f
-    
-    def save(self):
-        name = f"gen_{self.generation}"
-        self.EXPERIMENT_NAME = Population.EXPERIMENT_NAME
-        self.ENVIRONMENT_NAME = Population.ENVIRONMENT_NAME 
-        path = f"{self.path}/{name}"
-        pickle.dump(self, open(f"{self.path}/{name}.pkl", "wb"))
-        print('saved')
-
 
 
     def mutate_add_node(self):
@@ -229,15 +159,15 @@ class Genome:
         if random.random() < Genome.chance_to_add_connection:
             self.mutate_add_connection()
 
-    #def activation_function(self, x):
-    #    try:
-    #        value =  2/(1+math.exp(-5*x))-1
-    #    except OverflowError:
-    #        if x > 1:
-    #            value = 1
-    #        if x < -1:
-    #            value = -1
-    #    return value
+    def activation_function(self, x):
+        try:
+            value =  2/(1+math.exp(-5*x))-1
+        except OverflowError:
+            if x > 1:
+                value = 1
+            if x < -1:
+                value = -1
+        return value
 
         #x = i
         #return 1 / (1+math.exp(-x))
@@ -272,8 +202,18 @@ class Genome:
                 r.enabled = False
             elif in_node.node_layer < out_node.node_layer:
                 r.is_recurrent = False
+        """
+        what do do with recurrent connections?
+        layers shuffled >>= [for r in recurrent: check]
+        check = if in_node.layer 
 
-    def save_brain(self, hide_disabled=False, name='example'):
+        where do i need to change things?
+        - refresh_layers
+        - add_connection
+        - reenable connection (check if layers are good before reenabling)
+        """
+
+    def show(self, hide_disabled=False, name='example'):
         graph = nx.Graph()
         nt = VisualNetwork(notebook=True , cdn_resources='in_line',layout=True, directed=True)
         for n in self.nodes:
@@ -326,47 +266,47 @@ class Genome:
         weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / max(len(a), 1)
         return Genome.C1 * excess_count + Genome.C2 * disjoint_count + Genome.C3 * weight_diff
     
-    #def calculate_fitness(self):
-    #    observation,info = environment.reset()
-    #    done = False       
-    #    fin_reward = 0
-    #    not_moving_counter = 0
-    #    while not done:
-    #        self.load_inputs(observation)
-    #        self.run_network()
-    #        output = self.get_output()
-    #        assert(len(output) == 4)
-    #        action = output
-    #        observation, reward, terminated, truncated, info = environment.step(action)
-    #        if reward < 0.01:
-    #            not_moving_counter += 1
-    #            if not_moving_counter > 30:
-    #                done = True
-    #        else:
-    #            not_moving_counter = 0
-    #        fin_reward += reward
-    #        if terminated or truncated:
-    #            done = True
-    #    self.fitness = fin_reward
+    def calculate_fitness(self, environment: gym.Env):
+        observation,info = environment.reset()
+        done = False       
+        fin_reward = 0
+        not_moving_counter = 0
+        while not done:
+            self.load_inputs(observation)
+            self.run_network()
+            output = self.get_output()
+            assert(len(output) == 4)
+            action = output
+            observation, reward, terminated, truncated, info = environment.step(action)
+            if reward < 0.01:
+                not_moving_counter += 1
+                if not_moving_counter > 30:
+                    done = True
+            else:
+                not_moving_counter = 0
+            fin_reward += reward
+            if terminated or truncated:
+                done = True
+        self.fitness = fin_reward
 
-    #def render_run(self, environment: gym.Env):
-    #    observation, info = environment.reset()
-    #    done = False       
-    #    # take in observations
-    #    final_reward = 0
-    #    environment.render()
-    #    while not done:
-    #        self.load_inputs(observation)
-    #        self.run_network()
-    #        output = self.get_output()
-    #        assert(len(output) == 4)
-    #        action = output
-    #        observation, reward, terminated, truncated, info = environment.step(action)
-    #        final_reward += reward
-    #        if  terminated or truncated:
-    #            done = True
-    #            observation, info = environment.reset()
-    #    print(f"Fitness of running organism: {final_reward}")
+    def render_run(self, environment: gym.Env):
+        observation, info = environment.reset()
+        done = False       
+        # take in observations
+        final_reward = 0
+        environment.render()
+        while not done:
+            self.load_inputs(observation)
+            self.run_network()
+            output = self.get_output()
+            assert(len(output) == 4)
+            action = output
+            observation, reward, terminated, truncated, info = environment.step(action)
+            final_reward += reward
+            if  terminated or truncated:
+                done = True
+                observation, info = environment.reset()
+        print(f"Fitness of running organism: {final_reward}")
 
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
@@ -394,9 +334,17 @@ def crossover(genome1:Genome, genome2:Genome):
 
 
 class Population:
-    def __init__(self, EXPERIMENT_NAME, ENVIRONMENT_NAME):
-        Population.EXPERIMENT_NAME = EXPERIMENT_NAME
-        Population.ENVIRONMENT_NAME = ENVIRONMENT_NAME 
+    size = 50
+    specie_target = 4
+    max_iterations = 2000
+    threshold_step_size = 0.3
+    problem_fitness_threshold = 290
+
+    def __init__(self, size, genome, show=False, model=ENVIRONMENT_NAME):
+        if show:
+            self.env = gym.make(model, render_mode='human')
+        else:
+            self.env = gym.make(model, render_mode='none')
         self.organisms = []
         self.species = []
         self.generation = 0
@@ -406,15 +354,17 @@ class Population:
         os.mkdir(self.path)
         print(f"Starting experiment {self.serial_number}")
         self.done = False
-        g = Genome(Population.input_size, Population.output_size)
+        Population.size = size
+        Population.threshold_step_size = 0.3
+        g = Genome(genome[0], genome[1])
         self.default_genome = g
-        for _ in range(Population.size+1):
+        for _ in range(size+1):
             self.organisms.append(copy.deepcopy(g))
         self.speciate()
 
     def calculate_fitness(self):
         for o in self.organisms:
-            isDone = o.calculate_fitness()
+            o.calculate_fitness(self.env)
 
     def iteration(self):
         mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
@@ -427,15 +377,13 @@ class Population:
             self.done = True
             self.champion = self.organisms[0]
             return
-        # make this behind a hyperparameter perhaps
         else:
             if self.generation % 10 == 0 and self.generation != 0:
                 name = f"gen_{self.generation}"
-                chosen = self.organisms[0]
-                path = f"{self.path}/{name}"
+                self.organisms[0].show(name=f"{self.path}/{name}")
                 pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
-                print(f"Saved model {self.serial_number} {name}")
-        if self.done: return
+                print(f"Saved model {name}")
+
         self.calculate_offspring()
         self.crossover()
 
@@ -461,25 +409,32 @@ class Population:
     def crossover(self):
         new_population = []
         counter = 0
+        TOP_PROC_TO_REPRODUCE = 0.2
 
-        if Population.ELITISM:
+        CROSS_SPECIE_REPRODUCTION = True
+        CROSS_SPECIE_WEIGHT_MODIFIER = 0.3
+
+        ELITISM = True
+        ELITISM_PERCENTAGE = 0.05
+
+        if ELITISM:
             # top 5% of population goes to next generation
-            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * Population.ELITISM_PERCENTAGE)] 
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(Population.size * ELITISM_PERCENTAGE)] 
             for b in best: new_population.append(copy.deepcopy(b))
 
         for s in self.species:
             specie_counter = 0
             choices = []
             weights = []
-            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[: max(math.floor(Population.TOP_PROC_TO_REPRODUCE * len(s.organisms)), 1)] ]:
+            for x in [x for x in sorted(s.organisms, key=lambda f:f.fitness, reverse=True)[: max(math.floor(TOP_PROC_TO_REPRODUCE * len(s.organisms)), 1)] ]:
                 choices.append(x)
                 weights.append(x.fitness if x.fitness > 0 else (- 1 / x.fitness) )
 
-            if Population.CROSS_SPECIE_REPRODUCTION:
+            if CROSS_SPECIE_REPRODUCTION:
                 for x in [x for x in sorted(self.organisms, key=lambda f:f.fitness, reverse=True)[: max(math.floor(0.2 * len(s.organisms) ), 1)] ]:
                     if x.fitness > 0:
                         choices.append(x)
-                        weights.append( x.fitness * Population.CROSS_SPECIE_WEIGHT_MODIFIER)
+                        weights.append( x.fitness * CROSS_SPECIE_WEIGHT_MODIFIER)
 
             while specie_counter < s.offspring:
                 g1, g2 = random.choices(choices, weights=weights, k=2)
@@ -492,6 +447,8 @@ class Population:
         self.organisms = new_population
 
     def speciate(self):
+        DYNAMIC_THRESHOLD =True
+
         for s in self.species:
             s.clear_members()
 
@@ -509,7 +466,8 @@ class Population:
         for s in self.species: 
             s.representative = random.choice(s.organisms)
 
-        if Population.DYNAMIC_THRESHOLD:
+        #setting new threshold to adjust specie size
+        if DYNAMIC_THRESHOLD:
             if len(self.species) < Population.specie_target:
                 Specie.threshold -= Population.threshold_step_size
             if len(self.species) > Population.specie_target:
@@ -517,6 +475,8 @@ class Population:
         assert sum(len(s.organisms) for s in self.species) == len(self.organisms)
 
 class Specie:
+    threshold = 3
+    use_adjusted_fitness=True
     def __init__(self, id, representative):
         self.id = id
         self.organisms = [representative]
@@ -539,45 +499,17 @@ class Specie:
     def calculate_stats(self):
         self.calculate_adjusted_fitness()
         self.total_adjusted_fitness = sum([o.adjusted_fitness for o in self.organisms])
+        #if Specie.use_adjusted_fitness:
+        #    self.calculate_adjusted_fitness()
+        #    self.average = sum([o.adjusted_fitness for o in self.organisms]) / len(self.organisms)
+        #else:
+        #    self.average = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        #if self.average >= oldAvg:
+        #    self.gens_since_improvement = 0
+        #else:
+        #    self.gens_since_improvement += 1
+        #self.n = len(self.organisms)
+
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
-
-def Initialize(config:Config):
-    global Genome
-    global Population
-    global Specie
-
-    Genome.activation_function = config.activation
-    Genome.show = config.show
-    Genome.calculate_fitness = config.fitness
-    Population.input_size = config.input_size
-    Population.output_size = config.output_size
-
-    Genome.C1 =config.C1
-    Genome.C2 =config.C2
-    Genome.C3 =config.C3
-    Genome.chance_mutate_weight =config.chance_mutate_weight
-    Genome.chance_of_20p_weight_change =config.chance_of_20p_weight_change
-    Genome.chance_of_new_random_weight =config.chance_of_new_random_weight
-    Genome.chance_to_add_connection =config.chance_to_add_connection
-    Genome.chance_to_add_node=config.chance_to_add_node
-    Genome.tries_to_make_connections =config.tries_to_make_connections
-    Genome.chance_to_reactivate_disabled_connection =config.chance_to_reactivate_disabled_connection
-    Genome.allowRecurrent =config.allowRecurrent
-
-    Population.size =config.size
-    Population.specie_target =config.specie_target
-    Population.max_iterations =config.max_iterations
-    Population.threshold_step_size =config.threshold_step_size
-    Population.problem_fitness_threshold =config.problem_fitness_threshold
-
-    Population.TOP_PROC_TO_REPRODUCE =config.TOP_PROC_TO_REPRODUCE
-    Population.CROSS_SPECIE_REPRODUCTION =config.CROSS_SPECIE_REPRODUCTION
-    Population.CROSS_SPECIE_WEIGHT_MODIFIER =config.CROSS_SPECIE_WEIGHT_MODIFIER
-    Population.ELITISM =config.ELITISM
-    Population.ELITISM_PERCENTAGE =config.ELITISM_PERCENTAGE
-
-
-    Population.DYNAMIC_THRESHOLD = config.DYNAMIC_THRESHOLD
-
-    Specie.threshold = config.INITIAL_THRESHOLD
+main()

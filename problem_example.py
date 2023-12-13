@@ -12,8 +12,11 @@ def activation_function(self, x):
             value = -1
     return value
 
-def calculate_fitness(self):
-    environment = Population.env
+def calculate_fitness(self, visible=False):
+    if visible:
+        environment = gym.make(ENVIRONMENT_NAME, render_mode='human')
+    else:
+        environment = Population.env
     observation,info = environment.reset()
     done = False       
     fin_reward = 0
@@ -59,12 +62,16 @@ def display(self:Genome):
     print(f"Fitness of running organism: {final_reward}")
     
 
-c = Config(activation=activation_function, display=display, fitness=calculate_fitness, input_size=28, output_size=4 )
-Initialize(c)
-p = Population()
-Population.env = gym.make(ENVIRONMENT_NAME, render_mode='none')
-p.run()
-if p.done:
-    new_env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-    p.champion.render_run(new_env)
-    p.champion.show(name=f"{EXPERIMENT_NAME}/champion")
+def main():
+    c = Config(activation=activation_function, display=display, fitness=calculate_fitness, input_size=28, output_size=4 )
+    Initialize(c)
+    p = Population()
+    Population.env = gym.make(ENVIRONMENT_NAME, render_mode='none')
+    p.run()
+    if p.done:
+        new_env = gym.make(ENVIRONMENT_NAME, render_mode='human')
+        p.champion.render_run(new_env)
+        p.champion.show(name=f"{EXPERIMENT_NAME}/champion")
+
+if __name__ == "__main__":
+    main()
