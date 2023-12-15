@@ -1,4 +1,5 @@
 import torch
+import dill
 import os
 import string
 import copy
@@ -19,15 +20,18 @@ It only needs to expose basic population api and way to specify hyperparameters
 class Config:
     def __init__(self,
      activation
-    ,display
     ,fitness
     ,input_size
     ,output_size
+    ,EXPERIMENT_PATH
     ,initialization_function = lambda x : x
     ,C1=1,
     C2=1,
     C3=0.4,
     meta={},
+    print_generation = None,       
+    every_generation = lambda x : x,
+    after_finished = lambda x : x
     ,chance_mutate_weight = 0.8
     ,chance_of_20p_weight_change = 0.9
     ,chance_of_new_random_weight = 0.1
@@ -38,7 +42,7 @@ class Config:
     ,allowRecurrent = True
     ,size = 50
     ,specie_target = 4
-    ,max_iterations = 2000
+    ,max_iterations = 600
     ,threshold_step_size = 0.3
     ,problem_fitness_threshold = 290
     ,TOP_PROC_TO_REPRODUCE = 0.2
@@ -49,14 +53,20 @@ class Config:
     ,DYNAMIC_THRESHOLD =True
     ,INITIAL_THRESHOLD = 3
      ):
+        assert EXPERIMENT_PATH is not None
         assert activation is not None
-        assert display is not None
         assert fitness is not None
         assert input_size is not None
         assert output_size is not None
+
+
+        self.print_generation  = print_generation        
+        self.every_generation =every_generation 
+        self.after_finished = after_finished 
+
         self.activation = activation
+        self.EXPERIMENT_PATH= EXPERIMENT_PATH
         self.initialization_function = initialization_function
-        self.show = display
         self.fitness = fitness
         self.input_size = input_size
         self.output_size = output_size
@@ -77,15 +87,11 @@ class Config:
         self.max_iterations = max_iterations
         self.threshold_step_size =threshold_step_size 
         self.problem_fitness_threshold = problem_fitness_threshold 
-
         self.TOP_PROC_TO_REPRODUCE = TOP_PROC_TO_REPRODUCE 
-
         self.CROSS_SPECIE_REPRODUCTION = CROSS_SPECIE_REPRODUCTION 
         self.CROSS_SPECIE_WEIGHT_MODIFIER = CROSS_SPECIE_WEIGHT_MODIFIER 
-
         self.ELITISM = ELITISM
         self.ELITISM_PERCENTAGE = ELITISM_PERCENTAGE 
-
         self.DYNAMIC_THRESHOLD = DYNAMIC_THRESHOLD 
         self.INITIAL_THRESHOLD = INITIAL_THRESHOLD 
 
@@ -287,7 +293,7 @@ class Genome:
                         title=f"in:{c.innov_id}\nw:{c.weight}",\
                         hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
-        nt.show(f'{name}.html')
+        nt.show(f'{self.EXPERIMENT_PATH}/{name}.html')
 
     def load_inputs(self, inputs):
         for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key=lambda x: x.node_id)), inputs ):
@@ -393,17 +399,19 @@ def crossover(genome1:Genome, genome2:Genome):
     prototype.mutate()
     return prototype
 
-
 class Population:
     def __init__(self, config):
         self.config = config
+        self.config = config
+        setattr(Genome, 'calculate_fitness', config.fitness)
+        setattr(Genome, 'activation_function', config.activation)
         self.organisms = []
         Specie.threshold = config.INITIAL_THRESHOLD
         self.species = []
         self.generation = 0
         self.total_adjusted_fitness = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        self.path = f"{config.meta['EXPERIMENT_NAME']}/{self.serial_number}"
+        self.path = f"{config.EXPERIMENT_PATH}/{self.serial_number}"
         os.mkdir(self.path)
         print(f"Starting experiment {self.serial_number}")
         self.done = False
@@ -413,41 +421,47 @@ class Population:
             self.organisms.append(copy.deepcopy(g))
         self.speciate()
 
-    def calculate_fitness(self):
-        for o in self.organisms:
-            isDone = o.calculate_fitness()
-
     def iteration(self):
         mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
         std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
-        print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
         self.speciate()
-        self.calculate_fitness()
+        for o in self.organisms:
+            isDone, fitness = o.calculate_fitness()
+            o.fitness = fitness
+            if isDone or o.fitness > self.config.problem_fitness_threshold:
+                self.done = True
+                self.champion = o
+                self.config.after_finished(self)
+                return True
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
+        if self.config.print_generation is not None:
+            self.config.print_generation(self)
+        else:
+            print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
         if self.organisms[0].fitness > self.config.problem_fitness_threshold:
             self.done = True
             self.champion = self.organisms[0]
-            return
-        # make this behind a hyperparameter perhaps
-        else:
-            if self.generation % 10 == 0 and self.generation != 0:
-                name = f"gen_{self.generation}"
-                chosen = self.organisms[0]
-                path = f"{self.path}/{name}"
-                pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
-                print(f"Saved model {self.serial_number} {name}")
-        if self.done: return
+            self.config.after_finished(self)
+            return True
+        self.config.every_generation(self)
+            #if self.generation % 10 == 0 and self.generation != 0:
+            #    name = f"gen_{self.generation}"
+            #    chosen = self.organisms[0]
+            #    path = f"{self.path}/{name}"
+            #    pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
+            #    print(f"Saved model {self.serial_number} {name}")
         self.calculate_offspring()
         self.crossover()
 
     def run(self):
         while self.done == False and self.generation < self.config.max_iterations:
-            self.iteration()
+            r = self.iteration()
+            if r: break
             self.generation += 1
         if self.done:
-            print("Done")
+            print(f"Experiment {self.serial_number} finished in {self.generation} generations")
         else:
-            print("Did not find solution in {} iterations".format(self.config.max_iterations))
+            print(f"Experiment {self.serial_number} did not finish in {self.generation} generations")
 
     def calculate_offspring(self):
         for s in self.species:
@@ -487,7 +501,7 @@ class Population:
                 new_population.append(crossover(g1,g2))
                 specie_counter += 1
 
-        while len(new_population) < Population.size:
+        while len(new_population) <self.config.size:
             counter += 1
             new_population.append(copy.deepcopy(self.default_genome))
         self.organisms = new_population

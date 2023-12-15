@@ -64,7 +64,6 @@ c = Config(
     input_size=5,
     output_size=3,
     DYNAMIC_THRESHOLD=True
-
     )
 
 Initialize(c)
