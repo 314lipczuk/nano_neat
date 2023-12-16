@@ -11,7 +11,6 @@ import gymnasium as gym
 from pyvis.network import Network as VisualNetwork
 import pickle
 
-#ENVIRONMENT_NAME = 'BipedalWalker-v3'
 """
 Model exposes simple api. It takes in activation function, fitness function, and display function (in the future maybe also aggregation function)
 It only needs to expose basic population api and way to specify hyperparameters
@@ -108,7 +107,7 @@ class Node:
     def __repr__(self):
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
-    @staticmethod #working
+    @staticmethod 
     def get_node_id(genome):
         return len(genome.nodes)
 
@@ -171,8 +170,6 @@ class Genome:
         pickle.dump(self, open(f"{self.path}/{name}.pkl", "wb"))
         print('saved')
 
-
-
     def mutate_add_node(self):
         conn_to_pick = random.choice([c for c in self.connections if c.enabled and c.is_recurrent == False])
         conn_to_pick.enabled = False
@@ -233,26 +230,6 @@ class Genome:
         
         if random.random() < self.config.chance_to_add_connection:
             self.mutate_add_connection()
-
-    #def activation_function(self, x):
-    #    try:
-    #        value =  2/(1+math.exp(-5*x))-1
-    #    except OverflowError:
-    #        if x > 1:
-    #            value = 1
-    #        if x < -1:
-    #            value = -1
-    #    return value
-
-        #x = i
-        #return 1 / (1+math.exp(-x))
-
-        #steepened sigmoid
-        #x = torch.tensor(i)
-        #if x >= 0:
-        #    return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
-        #else:
-        #    return float(torch.exp(1e5*x)/(1+torch.exp(1e5*x)).to(torch.float))
 
     def __repr__(self):
         return f"Genome f:${self.fitness}, nodes:{len(self.nodes)}, conns:{len(self.connections)}"
@@ -334,48 +311,6 @@ class Genome:
         weight_diff = sum([ abs(a[i]-b[i]) for i in range(len(a))]) / max(len(a), 1)
         return self.config.C1 * excess_count + self.config.C2 * disjoint_count + self.config.C3 * weight_diff
     
-    #def calculate_fitness(self):
-    #    observation,info = environment.reset()
-    #    done = False       
-    #    fin_reward = 0
-    #    not_moving_counter = 0
-    #    while not done:
-    #        self.load_inputs(observation)
-    #        self.run_network()
-    #        output = self.get_output()
-    #        assert(len(output) == 4)
-    #        action = output
-    #        observation, reward, terminated, truncated, info = environment.step(action)
-    #        if reward < 0.01:
-    #            not_moving_counter += 1
-    #            if not_moving_counter > 30:
-    #                done = True
-    #        else:
-    #            not_moving_counter = 0
-    #        fin_reward += reward
-    #        if terminated or truncated:
-    #            done = True
-    #    self.fitness = fin_reward
-
-    #def render_run(self, environment: gym.Env):
-    #    observation, info = environment.reset()
-    #    done = False       
-    #    # take in observations
-    #    final_reward = 0
-    #    environment.render()
-    #    while not done:
-    #        self.load_inputs(observation)
-    #        self.run_network()
-    #        output = self.get_output()
-    #        assert(len(output) == 4)
-    #        action = output
-    #        observation, reward, terminated, truncated, info = environment.step(action)
-    #        final_reward += reward
-    #        if  terminated or truncated:
-    #            done = True
-    #            observation, info = environment.reset()
-    #    print(f"Fitness of running organism: {final_reward}")
-
 def crossover(genome1:Genome, genome2:Genome):
     def equals(g1,g2):
         equality_threshold = 0.015
@@ -434,14 +369,14 @@ class Population:
                 self.config.after_finished(self)
                 return True
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
-        mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
-        std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
-        n = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-        itertime = (n-self.t)/1000000000
-        self.t = n
         if self.config.print_generation is not None:
             self.config.print_generation(self)
         else:
+            mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+            std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
+            n = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+            itertime = (n-self.t)/1000000000
+            self.t = n
             print("Generation", self.generation, "\tfitness:", "%.2f" %(self.organisms[0].fitness), "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms), "itertime:" ,round(itertime, 2), "s")
         if self.organisms[0].fitness > self.config.problem_fitness_threshold:
             self.done = True
@@ -449,12 +384,6 @@ class Population:
             self.config.after_finished(self)
             return True
         self.config.every_generation(self)
-            #if self.generation % 10 == 0 and self.generation != 0:
-            #    name = f"gen_{self.generation}"
-            #    chosen = self.organisms[0]
-            #    path = f"{self.path}/{name}"
-            #    pickle.dump(self.organisms[0], open(f"{self.path}/{name}.pkl", "wb"))
-            #    print(f"Saved model {self.serial_number} {name}")
         self.calculate_offspring()
         self.crossover()
 
@@ -473,16 +402,6 @@ class Population:
             s.calculate_stats()
         total_average = sum([o.adjusted_fitness for o in self.organisms])
         for s in self.species:
-            #if s.total_adjusted_fitness < 0 or total_average < 0:
-            #    print("LT 0, specie", s.total_adjusted_fitness, "total", total_average)
-            #proportion = s.total_adjusted_fitness / total_average 
-            #if proportion < 0 and total_average < 0: offspring = round(-proportion * self.config.size) 
-            #elif proportion < 0 and total_average > 0: offspring = 0
-            #elif proportion > 0 and total_average < 0:
-            #    offspring = round((1/proportion) * self.config.size)
-            #else:
-            #    offspring = round(proportion * self.config.size) 
-
             proportion = s.total_adjusted_fitness / total_average 
             s.offspring = round(proportion * self.config.size)
             if s.offspring > self.config.size:
@@ -495,7 +414,6 @@ class Population:
         counter = 0
 
         if self.config.ELITISM:
-            # top 5% of population goes to next generation
             best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor( self.config.size * self.config.ELITISM_PERCENTAGE)] 
             for b in best: new_population.append(copy.deepcopy(b))
 
@@ -573,43 +491,3 @@ class Specie:
         self.total_adjusted_fitness = sum([o.adjusted_fitness for o in self.organisms])
     def __repr__(self):
         return f"Specie id:{self.id}, len:{len(self.organisms)}, avg f{round(self.average, 3)}, gens since imp {self.gens_since_improvement}, avg nodes {sum([len(o.nodes) for o in self.organisms]) / len(self.organisms)}, avg conns: {sum([len(o.connections) for o in self.organisms]) / len(self.organisms)}"
-
-#def Initialize(config:Config):
-#    global Genome
-#    global Population
-#    global Specie
-#
-#    Genome.activation_function = config.activation
-#    Genome.show = config.show
-#    Genome.calculate_fitness = config.fitness
-#    Population.input_size = config.input_size
-#    Population.output_size = config.output_size
-#
-#    Genome.C1 =config.C1
-#    Genome.C2 =config.C2
-#    Genome.C3 =config.C3
-#    Genome.chance_mutate_weight =config.chance_mutate_weight
-#    Genome.chance_of_20p_weight_change =config.chance_of_20p_weight_change
-#    Genome.chance_of_new_random_weight =config.chance_of_new_random_weight
-#    Genome.chance_to_add_connection =config.chance_to_add_connection
-#    Genome.chance_to_add_node=config.chance_to_add_node
-#    Genome.tries_to_make_connections =config.tries_to_make_connections
-#    Genome.chance_to_reactivate_disabled_connection =config.chance_to_reactivate_disabled_connection
-#    Genome.allowRecurrent =config.allowRecurrent
-#
-#    Population.size =config.size
-#    Population.specie_target =config.specie_target
-#    Population.max_iterations =config.max_iterations
-#    Population.threshold_step_size =config.threshold_step_size
-#    Population.problem_fitness_threshold =config.problem_fitness_threshold
-#
-#    Population.TOP_PROC_TO_REPRODUCE =config.TOP_PROC_TO_REPRODUCE
-#    Population.CROSS_SPECIE_REPRODUCTION =config.CROSS_SPECIE_REPRODUCTION
-#    Population.CROSS_SPECIE_WEIGHT_MODIFIER =config.CROSS_SPECIE_WEIGHT_MODIFIER
-#    Population.ELITISM =config.ELITISM
-#    Population.ELITISM_PERCENTAGE =config.ELITISM_PERCENTAGE
-#
-#
-#    Population.DYNAMIC_THRESHOLD = config.DYNAMIC_THRESHOLD
-#
-#    Specie.threshold = config.INITIAL_THRESHOLD
