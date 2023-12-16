@@ -11,14 +11,6 @@ def activation_function(self, x):
         return float(1./(1+torch.exp(-1e5*x)).to(torch.float))
     else:
         return float(torch.exp(1e5*x)/(1+torch.exp(1e5*x)).to(torch.float))
-    #try:
-    #    value =  2/(1+math.exp(-5*x))-1
-    #except OverflowError:
-    #    if x > 1:
-    #        value = 1
-    #    if x < -1:
-    #        value = -1
-    #return value
 
 def calculate_fitness(self, visible=False):
     INPUT = [[0,0], [0,1], [1,0], [1,1]]
@@ -62,13 +54,7 @@ XorConfig = Config(
 
 def main():
     p = Population(config=XorConfig)
-    #experiment_name = XorConfig.meta["gym_environment"]
-    #Population.env = gym.make(experiment_name, render_mode='none')
     p.run()
-    #if p.done:
-    #    new_env = gym.make(experiment_name, render_mode='human')
-    #    p.champion.render_run(new_env)
-    #    p.champion.show(name=f"{experiment_name}/champion")
 
 if __name__ == "__main__":
     main()
