@@ -1,4 +1,5 @@
 import torch
+import time
 import dill
 import os
 import string
@@ -11,7 +12,6 @@ from pyvis.network import Network as VisualNetwork
 import pickle
 
 #ENVIRONMENT_NAME = 'BipedalWalker-v3'
-#EXPERIMENT_NAME = './tmp/BIPEDAL'
 """
 Model exposes simple api. It takes in activation function, fitness function, and display function (in the future maybe also aggregation function)
 It only needs to expose basic population api and way to specify hyperparameters
@@ -44,13 +44,13 @@ class Config:
     ,specie_target = 4
     ,max_iterations = 600
     ,threshold_step_size = 0.3
-    ,problem_fitness_threshold = 290
+    ,problem_fitness_threshold = 390
     ,TOP_PROC_TO_REPRODUCE = 0.2
     ,CROSS_SPECIE_REPRODUCTION = True
     ,CROSS_SPECIE_WEIGHT_MODIFIER = 0.3
     ,ELITISM = True
     ,ELITISM_PERCENTAGE = 0.05
-    ,DYNAMIC_THRESHOLD =True
+    ,DYNAMIC_THRESHOLD = True
     ,INITIAL_THRESHOLD = 3
      ):
         assert EXPERIMENT_PATH is not None
@@ -94,7 +94,6 @@ class Config:
         self.ELITISM_PERCENTAGE = ELITISM_PERCENTAGE 
         self.DYNAMIC_THRESHOLD = DYNAMIC_THRESHOLD 
         self.INITIAL_THRESHOLD = INITIAL_THRESHOLD 
-
 
 class Node:
     next_node_id=0
@@ -161,7 +160,9 @@ class Genome:
 
     @staticmethod
     def create_from_file(path):
-        f = pickle.load(open(path, 'rb'))
+        fl = open(path, 'rb')
+        f = dill.load(fl)
+        fl.close()
         return f
     
     def save(self):
@@ -411,6 +412,7 @@ class Population:
         self.generation = 0
         self.total_adjusted_fitness = 0
         self.serial_number = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.t = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
         self.path = f"{config.EXPERIMENT_PATH}/{self.serial_number}"
         os.mkdir(self.path)
         print(f"Starting experiment {self.serial_number}")
@@ -422,8 +424,6 @@ class Population:
         self.speciate()
 
     def iteration(self):
-        mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
-        std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
         self.speciate()
         for o in self.organisms:
             isDone, fitness = o.calculate_fitness()
@@ -434,10 +434,15 @@ class Population:
                 self.config.after_finished(self)
                 return True
         self.organisms.sort(key=lambda x: x.fitness, reverse=True)
+        mean = sum([o.fitness for o in self.organisms]) / len(self.organisms)
+        std_dev = math.sqrt(sum([(o.fitness - mean) ** 2 for o in self.organisms]) / len(self.organisms))
+        n = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+        itertime = (n-self.t)/1000000000
+        self.t = n
         if self.config.print_generation is not None:
             self.config.print_generation(self)
         else:
-            print("Generation", self.generation, "\tfitness:", "%.2f" %self.organisms[0].fitness, "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms) )
+            print("Generation", self.generation, "\tfitness:", "%.2f" %(self.organisms[0].fitness), "\tmean:", "%.2f" %mean, "\tstd dev:", "%.2f" %std_dev, "\tSpecies:", len(self.species), "Population ",len(self.organisms), "itertime:" ,round(itertime, 2), "s")
         if self.organisms[0].fitness > self.config.problem_fitness_threshold:
             self.done = True
             self.champion = self.organisms[0]
@@ -468,8 +473,20 @@ class Population:
             s.calculate_stats()
         total_average = sum([o.adjusted_fitness for o in self.organisms])
         for s in self.species:
+            #if s.total_adjusted_fitness < 0 or total_average < 0:
+            #    print("LT 0, specie", s.total_adjusted_fitness, "total", total_average)
+            #proportion = s.total_adjusted_fitness / total_average 
+            #if proportion < 0 and total_average < 0: offspring = round(-proportion * self.config.size) 
+            #elif proportion < 0 and total_average > 0: offspring = 0
+            #elif proportion > 0 and total_average < 0:
+            #    offspring = round((1/proportion) * self.config.size)
+            #else:
+            #    offspring = round(proportion * self.config.size) 
+
             proportion = s.total_adjusted_fitness / total_average 
-            s.offspring = round(proportion * self.config.size) #Population.size
+            s.offspring = round(proportion * self.config.size)
+            if s.offspring > self.config.size:
+                print("######## ABNORMAL SIZE OF SPECIE", s," #########\nproportion", proportion, " total: ", total_average, " specie_total", s.total_adjusted_fitness, " specie offspring", s.offspring, " population size", self.config.size)
             if s.gens_since_improvement >= 15:
                 s.offspring = 0
 
@@ -514,7 +531,7 @@ class Population:
             added = False
             for s in self.species:
                 cd = g.compatibility_distance(s.representative)
-                if cd < self.config.INITIAL_THRESHOLD:
+                if cd < Specie.threshold:
                     s.add_organism(g)
                     added = True
                     break
