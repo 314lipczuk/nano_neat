@@ -249,20 +249,7 @@ class Genome:
             fin_reward += reward
             if  terminated or truncated:
                 done = True
-                #observation, info = environment.reset()
-
         self.fitness = fin_reward
-        """
-        results = []
-        for i, o in zip(inputs, expected_outputs):
-            self.load_inputs(i)
-            self.run_network()
-            output = self.get_output()[0]
-            results.append((o, output ))
-        error = sum( [abs( r - o ) for o, r in results] )
-        self.fitness = round((4 - error) ** 2, 2)
-        """
-
     def render_run(self, environment: gym.Env):
         observation, info = environment.reset()
         done = False       

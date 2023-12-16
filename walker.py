@@ -54,7 +54,6 @@ def every_generation(p:Population):
             f.close()
             print(f"Saved model {p.serial_number} {name}")
 
-
 def after_finished(p:Population):
     champ = p.champion
     champ.calculate_fitness(visible=True)
@@ -87,10 +86,6 @@ def main():
     experiment_name = DefaultWalkerConfig.meta["gym_environment"]
     Population.env = gym.make(experiment_name, render_mode='none')
     p.run()
-    #if p.done:
-    #    new_env = gym.make(experiment_name, render_mode='human')
-    #    p.champion.render_run(new_env)
-    #    p.champion.show(name=f"{experiment_name}/champion")
 
 if __name__ == "__main__":
     main()
