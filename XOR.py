@@ -29,8 +29,6 @@ def calculate_fitness(self, visible=False):
 def every_generation(p:Population):
     if p.generation % 10 == 0 and p.generation > 0:
             name = f"gen_{p.generation}"
-            chosen =p.organisms[0]
-            path = f"{p.path}/{name}"
             f = open(f"{p.path}/{name}.pkl", "wb")
             dill.dump(p.organisms[0], f )
             f.close()

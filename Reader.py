@@ -11,33 +11,18 @@ from walker import DefaultWalkerConfig
 from model import Genome
 
 """
-Problem: reader
-I want to open an organism from a running experiment and see how it works
+Reader
+    args: population_name generation_number
+    runs simulation of the walker for saved generation of population specified
+    I could do this better & more generic, but it's not worth it. 
+    Other problems (acrobot & cart) are solved too quickly to be worth looking at.
 """
 
 def main():
-    selected = False
-    if len(sys.argv) == 2:
-        file = sys.argv[1]
-        selected = True
-        realname = f"{file}.pkl"
-        gn = Genome.create_from_file(realname)
-        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-        env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-        realname = f"{EXPERIMENT_NAME}/{NAME}/gen_{gen}.pkl"
-        setattr(Genome, 'activation_function', activation_function)
-        setattr(Genome, 'calculate_fitness', calculate_fitness)
-        print(gn)
-        Genome.calculate_fitness = calculate_fitness
-        gn.calculate_fitness(self=gn, visible=True)
-        #os.system(f"open {realname[:-3]}html")
-
     if len(sys.argv) == 3:
         gen= sys.argv[2]
         NAME = sys.argv[1]
         realname = f"./tmp/BIPEDAL/{NAME}/gen_{gen}.pkl"
-        #setattr(Genome, 'activation_function', activation_function)
-        #setattr(Genome, 'calculate_fitness', calculate_fitness)
         gn = Genome.create_from_file(realname)
         gn.config = DefaultWalkerConfig
         setattr(Genome, 'activation_function', gn.config.activation)
