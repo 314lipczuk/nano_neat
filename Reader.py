@@ -23,11 +23,6 @@ def main():
         realname = f"{file}.pkl"
         gn = Genome.create_from_file(realname)
         env = gym.make(ENVIRONMENT_NAME, render_mode='human')
-
-        #if gn.EXPERIMENT_NAME: 
-        #    EXPERIMENT_NAME = gn.EXPERIMENT_NAME
-        #if gn.ENVIRONMENT_NAME :
-        #     ENVIRONMENT_NAME= gn.ENVIRONMENT_NAME
         env = gym.make(ENVIRONMENT_NAME, render_mode='human')
         realname = f"{EXPERIMENT_NAME}/{NAME}/gen_{gen}.pkl"
         setattr(Genome, 'activation_function', activation_function)
