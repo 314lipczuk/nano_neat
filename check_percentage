@@ -1,0 +1,11 @@
+#!/usr/bin/env bun
+const checker_process = Bun.spawn(['pdfinfo', './tex/thesis.pdf'])
+
+checker_process.stdout.getReader().read().then((result) => {
+    //convert uint8array to string
+    const decoder = new TextDecoder()
+    let output = decoder.decode(result.value);
+    const pagecount = output.split('\n').filter(el=>el.includes('Pages'))[0].split(' ').filter(el=>el!='')[1]
+    const percentage = Number.parseInt(pagecount, 10) / 30 * 100
+    console.log(`Done ${percentage.toFixed(2)}% by volume`)
+})
