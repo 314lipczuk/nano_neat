@@ -1,0 +1,103 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{NanoNeat}
+\author{Przemysław Pilipczuk}
+\date{December 2023}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\section{Introduction}
+\subsection{Abstract}
+In this work I have implemented a fully functional NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
+with a focus on simplicity and readibility. The core algorithm is ~400loc of Python, and therefore is a 
+good resource for learning about NEAT. 
+\subsection{Keywords}
+Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
+\section{Related work}
+todo[idk, write about original paper here? or maybe about other implemetations?]
+\section{Methodology}
+    \subsection{Problems used to test the implementation}
+        \subsubsection{XOR}
+        Xor problem is a simple problem used mostly to test if the algorithm can start generating structure. 
+        This is because XOR function is non linearly separable - it cannot be solved by the simple topology that neat starts with.
+        To solve it, the algorithm needs to evolve a hidden layer. 
+        This problem is also used to test if the algorithm can generate minimal structure - the original paper 
+        todo[CITATION] states that the algoritm can solve the problem with 1 node in the hidden layer (However,
+        it does require that the starting topology has an additional input node designated
+        as bias, connected straight to the output). This requirement is not presented as a builtin configuration variant for this specific problem , as
+        it is trivial to add it using basic configuration change (add 1 more input that always returns "1", and add a function that 
+        hooks start of the population to set its connection weight to the output as 1).
+        \subsubsection{Cartpole}
+        Cartpole is a problem taken from Farama Foundation's Gymnasium library. It is a classic control problem, 
+        where an agent tries to balance a pole on a cart. The agent's observation space consists of cart's 
+        position, velocity, angle of the pole and its angular velocity. The agent can move the cart left or right.
+        This problem is a test of the implementation's ability to solve a basic real-world problem, but contrary 
+        to the xor problem, its model is subjected to multiple sequential runs,
+        with its fitness being judged based on its cumulative performance across these runs. This means, that
+        recurrent connections can potentially be used.
+        \subsubsection{Acrobot}
+        Acrobot is a similar problem to the cartpole, with a slightly bigger state space. The problem consists
+        of a two-link system, one of its ends fixed to a certain position. All of the joints are allowed to rotate,
+        abd the agent is given control over an actuated joint between the two links. Its goal is to swing the
+        end of the free link over given height (while starting from a hanging position). 
+        THis problem also is evaluated as a single evaluation session, being subjected to multiple sequential runs,
+        with its fitness being judged based on its cumulative performance across these runs.
+        \subsubsection{BipedalWalker}
+        BipedalWalker is the hardest problem used in this work. It is a problem taken from Farama Foundation's
+        Gymnasium library. The agent tries to control a bipedal robot and make it walk to the end of the map, while
+        making its movements energy-efficient. The observation space is significantly bigger than in previous problems,
+        consisting of 24 values. The action space somewhat similar, but due to the problem specifics, requiring a 
+        much more precise control. 
+    \subsection{Implementation details}
+        \subsubsection{Core algorithm}
+        The core algorithm if NEAT is implemented in ~400 lines of Python in model.py
+        The base for a single agent is a class called Genome. It contains a list of nodes and a list of connections for this particular 
+        specimen, as well as a fitness value. Nodes and Connections have their own respectively named classes, both of which are accessing
+        their Genomes' config object to get information about their ids and innovation numbers. Genome also controls the mutation process of itself,
+        having separate methods for mutations of nodes, connections, and weights. Genome's config is a shared object between all genomes, and it is 
+        given to it by a Population object during its initialization. Population is a class that controls the whole algorithm. It is responsible for
+        maintaining a list of genomes, list of species, and maintaining a coherent state between all the mutations of genomes and changes in specie set.
+        It is also responsible for the toplevel loop, that runs the algorithm for a given number of generations. The single loop looks like this:
+        \begin{enumerate}
+            \item Divide the population into Species
+            \item Calculate fitness of each individual genome
+            \item Check for exit condition
+            \item Calculate adjusted fitness of each individual genome
+            \item Calculate offspring count for each specie
+            \item Create new generation by crossover and mutation of selected genomes and species
+        \end{enumerate}
+        The Specie class is responsible for dealing with the speciation process and calculating relevant statistics for each (such as adjusted fitness or 
+        generation without improvement count). 
+        \subsubsection{Configuration}
+        Population object is initialized with a Config object, which is a main way to configure algorithm. It is a simple object with a set of fields
+        and a couple of methods. Most of the fields have default values, and are not required to be set manually by the user. The few fields that are
+        mandatory are: 
+        \begin{itemize}
+            \item population\_size - the number of genomes in the population
+            \item input\_size - the number of input nodes
+            \item output\_size - the number of output nodes
+            \item fitness\_function - a function that takes a genome and returns its fitness
+        \end{itemize}
+        TODO - tabelka z domyslnymi wartosciami konfiguracji
+        TODO - opis pola "meta" (disjoint fields for probolems, so that they cannot overwrite each other's fields, and so that they cannot overwrite other important fields)
+        \subsubsection{Problem-specific adjustments}
+        TODO - steepened activation function for xor,
+        TODO - different activation func for -1 - 1
+        TODO - recurrent enabled disabled
+        TODO - cross specie reproduction
+        TODO - using gymnasium environment 
+        TODO - adjusting fitness value from bipedal walker
+        thoink of more
+\section{Experimental results}
+[here write about results of experiments]
+\section{Conclusions}
+[here write conclusions about results of experiments]
+
+\section{Future work}
+\section{Bibliography}
+
+\end{document}
