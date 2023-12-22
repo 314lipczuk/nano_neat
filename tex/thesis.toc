@@ -11,8 +11,8 @@
 \contentsline {subsection}{\numberline {3.2}Implementation details}{3}{}%
 \contentsline {subsubsection}{\numberline {3.2.1}Core algorithm}{3}{}%
 \contentsline {subsubsection}{\numberline {3.2.2}Configuration}{4}{}%
-\contentsline {subsubsection}{\numberline {3.2.3}Problem-specific adjustments}{5}{}%
+\contentsline {subsubsection}{\numberline {3.2.3}Problem-specific adjustments}{6}{}%
 \contentsline {section}{\numberline {4}Experimental results}{6}{}%
-\contentsline {section}{\numberline {5}Conclusions}{6}{}%
-\contentsline {section}{\numberline {6}Future work}{6}{}%
-\contentsline {section}{\numberline {7}Bibliography}{6}{}%
+\contentsline {section}{\numberline {5}Conclusions}{7}{}%
+\contentsline {section}{\numberline {6}Future work}{7}{}%
+\contentsline {section}{\numberline {7}Bibliography}{7}{}%

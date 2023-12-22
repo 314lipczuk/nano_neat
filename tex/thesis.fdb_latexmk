@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1703205760 "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" "thesis.pdf" "thesis" 1703205760 0
-  "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" 1703205760 14427 194d9eaddbf58abf4c6638eb6612b7f4 ""
+["pdflatex"] 1703268127 "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" "thesis.pdf" "thesis" 1703268128 0
+  "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" 1703268127 16706 9a47aac3f9615f7c26ed6c08b96b11d4 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1678549815 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/map/fontname/texfonts.map" 1678549815 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1678549815 4609045 74543da1ab9350ba886fce0af49a2cfd ""
@@ -20,9 +20,13 @@
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/tfm/public/latex-fonts/lasy6.tfm" 1678549815 520 4889cce2180234b97cad636b6039c722 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1678549815 34811 78b52f49e893bcba91bd7581cdc144c0 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb" 1678549815 32080 340ef9bf63678554ee606688e7b5339d ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb" 1678549815 30251 6afa5cb1d0204815a708a080681d4674 ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1678549815 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb" 1678549815 36281 c355509802a035cadc5f15869451dcee ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1678549815 35752 024fb6c41858982481f6968b5fc26508 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1678549815 32722 d7379af29a190c3f453aba36302ff5a9 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1678549815 32362 179c33bbf43f19adbb3825bb4e36e57a ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb" 1678549815 32762 224316ccc9ad3ca0423a14971cfa7fc1 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1678549815 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb" 1678549815 138258 6525c253f16cededa14c7fd0da7f67b2 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1678549815 71627 94eb9990bed73c364d7f53f960cc8c5b ""
@@ -42,9 +46,9 @@
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg" 1678549815 678 4792914a8f45be57bb98413425e4c7af ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/web2c/texmf.cnf" 1678549815 40748 4081c8bc921e56c865f975bd762e388c ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1678549815 7884066 80f25e60658dfc5dcdb6ade5d53dd316 ""
-  "thesis.aux" 1703205760 1959 584505a66a8d34e06fe6dcf4b85920aa "pdflatex"
-  "thesis.tex" 1703205760 14427 194d9eaddbf58abf4c6638eb6612b7f4 ""
-  "thesis.toc" 1703205760 1189 ecf721fe51736b0d1dcc6c0e053829c6 "pdflatex"
+  "thesis.aux" 1703268128 1959 4afcaa5451cddd3ee2607a7d0dc146bb "pdflatex"
+  "thesis.tex" 1703268127 16706 9a47aac3f9615f7c26ed6c08b96b11d4 ""
+  "thesis.toc" 1703268128 1189 b9de2f11278e600430380e695573c083 "pdflatex"
   (generated)
   "thesis.aux"
   "thesis.log"

@@ -1,17 +1,13 @@
 \documentclass{article}
 \usepackage{graphicx} % Required for inserting images
 
-% Please add the following required packages to your document preamble:
+% table stuff
  \usepackage[normalem]{ulem}
  \useunder{\uline}{\ul}{}
-% Please add the following required packages to your document preamble:
  \usepackage[normalem]{ulem}
  \useunder{\uline}{\ul}{}
-% Please add the following required packages to your document preamble:
  \usepackage[normalem]{ulem}
  \useunder{\uline}{\ul}{}
-% Please add the following required packages to your document preamble:
-%\usepackage{graphicx}
  \usepackage[normalem]{ulem}
  \useunder{\uline}{\ul}{}
  \usepackage{float}
@@ -84,6 +80,7 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             \item Calculate adjusted fitness of each individual genome
             \item Calculate offspring count for each specie
             \item Create new generation by crossover and mutation of selected genomes and species
+            \item Repeat
         \end{enumerate}
         The Specie class is responsible for dealing with the speciation process and calculating relevant statistics for each (such as adjusted fitness or 
         generation without improvement count). 
@@ -133,23 +130,44 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             \end{tabular}%
             }
         \end{table}
-        TODO - tabelka z domyslnymi wartosciami konfiguracji
-        TODO - opis pola "meta" (disjoint fields for probolems, so that they cannot overwrite each other's fields, and so that they cannot overwrite other important fields)
+        The fields presented here are all generic over the problem the algorithm is trying to solve. If a problem requires a specific configuration,
+        (like a name of environment in gymnasium, or a offset for calculating fitness) it is stored in the meta field. This implementation was chosen
+        to make sure users cannot accidentally overwrite an iternal field of the Config object, and also to provide a clear boundary between NEAT config 
+        and problem-specific config, ensuring a more generic structure.
         \subsubsection{Problem-specific adjustments}
-        TODO - steepened activation function for xor,
-        TODO - different activation func for -1 - 1
-        TODO - recurrent enabled disabled
-        TODO - cross specie reproduction
-        TODO - using gymnasium environment 
-        TODO - adjusting fitness value from bipedal walker
-        thoink of more
-        
+        \begin{itemize}
+            \item XOR - This problem is given a custom activation function - a steepened sigmoid function.
+            This is because in this problem we don't care about exact value of the output, but rather if it is closer to 0 or 1.
+            The fitness function from origial NEAT paper todo[citation], namely $$(4 - \sum_{n=1}^{4}c_n-o_n)^2$$
+            where $c_n$ is the correct output and $o_n$ is the output of the network, for the problem's case number $n$.
+            Recurrent connections are disabled.
+            \item Cartpole - Here the configuration's meta field is used to store the name of the environment in gymnasium. That 
+            variable is then used during Population initialization to create an environment. Fitness function then accesses that 
+            environment to evaluate the genome.  
+            \item Acrobot - Similarly to previous problem, configuration here utilizes meta field for Gymnasium's environment name. 
+            Other than that, the configuration is standard with only mandatory fields being set.
+            \item BipedalWalker - This problem required the most adjustments to the configuration. First of all, the fitness function 
+            was tasked with offsetting the reward given by the environment, as its broad range of possible values was causing
+            problems during adjusted fitness calculation, and therefore affecting mating pool selection. The fitness function was 
+            programmed to cut minimum environment fitness value to a -100, and then offset that by 100 to make sure the fitness was always in range
+            of 0-400. This fixed the problem of adjusted fitness calculation, but also forced us to increase the fitness threshold 
+            for the problem by a 100. For clarity and coherent experience, custom printing function was used to print the 'environment' fitness
+            for the problem, as it is more intuitive.
+            Walker also needed its own activation function, as the baseline sigmoid function was not able to provide values in range [-1, 1].
+            \end{itemize}
 \section{Experimental results}
+\begin{itemize}
+    \item XOR   
+    The xor problem was tested with a population of 50, 100 tries and generation threshold of 300. The solution was found in 87 trials, and mean
+    generations it took to find the solution was 120.5, with standard deviation of 63.6 generations.
+    \item Acrobot 
+
+    \item Cartpole
+    The xor problem was tested with a population of 50 and generation threshold of 300. The results are presented in the table below.
+\end{itemize}
 [here write about results of experiments]
 \section{Conclusions}
 [here write conclusions about results of experiments]
-
 \section{Future work}
 \section{Bibliography}
-
 \end{document}

@@ -48,6 +48,7 @@ XorConfig = Config(
     meta = {},
     every_generation=every_generation,
     after_finished=after_finished,
+    max_iterations=300,
     )
 
 def main():
