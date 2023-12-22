@@ -1,6 +1,21 @@
 \documentclass{article}
 \usepackage{graphicx} % Required for inserting images
 
+% Please add the following required packages to your document preamble:
+ \usepackage[normalem]{ulem}
+ \useunder{\uline}{\ul}{}
+% Please add the following required packages to your document preamble:
+ \usepackage[normalem]{ulem}
+ \useunder{\uline}{\ul}{}
+% Please add the following required packages to your document preamble:
+ \usepackage[normalem]{ulem}
+ \useunder{\uline}{\ul}{}
+% Please add the following required packages to your document preamble:
+%\usepackage{graphicx}
+ \usepackage[normalem]{ulem}
+ \useunder{\uline}{\ul}{}
+ \usepackage{float}
+
 \title{NanoNeat}
 \author{Przemysław Pilipczuk}
 \date{December 2023}
@@ -14,7 +29,7 @@
 \subsection{Abstract}
 In this work I have implemented a fully functional NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
 with a focus on simplicity and readibility. The core algorithm is ~400loc of Python, and therefore is a 
-good resource for learning about NEAT. 
+good resource for learning about NEAT.
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
 \section{Related work}
@@ -77,11 +92,47 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
         and a couple of methods. Most of the fields have default values, and are not required to be set manually by the user. The few fields that are
         mandatory are: 
         \begin{itemize}
-            \item population\_size - the number of genomes in the population
+            \item activation - the function used for activation
             \item input\_size - the number of input nodes
             \item output\_size - the number of output nodes
+            \item experiment\_path - a path to where the experiment results will be saved
             \item fitness\_function - a function that takes a genome and returns its fitness
         \end{itemize}
+        \begin{table}[H]
+            \resizebox{\columnwidth}{!}{%
+            \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Variable name}               & \textbf{Default value} & \textbf{Description}                                                                                                                              \\ \hline
+            c1                                   & 1                      & \begin{tabular}[c]{@{}l@{}}Modifier for excess genes count when calculating\\  distance between genomes\end{tabular}                              \\ \hline
+            c2                                   & 1                      & \begin{tabular}[c]{@{}l@{}}Modifier for disjoint genes count when calculating\\  distance between genomes\end{tabular}                            \\ \hline
+            c3                                   & 0.8                    & \begin{tabular}[c]{@{}l@{}}Modifier for weight differences when calculating\\  distance between genomes\end{tabular}                              \\ \hline
+            meta                                 & \{\}                   & A place to store problem-specific variables.                                                                                                      \\ \hline
+            print\_generation                    &                        & \begin{tabular}[c]{@{}l@{}}A user-defined function for printing generation \\ during training\end{tabular}                                        \\ \hline
+            every\_generation                    &                        & \begin{tabular}[c]{@{}l@{}}A function being executed after every generation.\\  Useful for saving information about learning\end{tabular}         \\ \hline
+            after\_finished                      &                        & \begin{tabular}[c]{@{}l@{}}A function being executed after a problem\\  is finished\end{tabular}                                                  \\ \hline
+            chance\_mutate\_weight               & 0.8                    & \begin{tabular}[c]{@{}l@{}}A chance for mutating weight during mutation\\  process\end{tabular}                                                   \\ \hline
+            chance\_of\_20\_proc\_weight\_change & 0.9                    & Chance for a 20\% chance of weight value                                                                                                          \\ \hline
+            chance\_of\_randomize\_weight        & 0.1                    & \begin{tabular}[c]{@{}l@{}}Chance for a completely new randomized value\\  for a given weight\end{tabular}                                        \\ \hline
+            chance\_add\_connection              & 0.05                   & A chance to add a connection during mutation                                                                                                      \\ \hline
+            chance\_add\_node                    & 0.05                   & A chance to add a node during mutation                                                                                                            \\ \hline
+            tries\_to\_make\_connection          & 20                     & \begin{tabular}[c]{@{}l@{}}How many times system will try to find a valid\\  connection to make\end{tabular}                                      \\ \hline
+            chance\_to\_reactivate\_connection   & 0.25                   & A chance to reactivate a disabled connection                                                                                                      \\ \hline
+            allow\_recurremt                     & True                   & Allow forming recurrent connection                                                                                                                \\ \hline
+            population\_size                     & 50                     & A size of population                                                                                                                              \\ \hline
+            specie\_target                       & 4                      & A amount of species that system is trying to achieve                                                                                              \\ \hline
+            max\_iterations                      & 600                    & \begin{tabular}[c]{@{}l@{}}A max amount of generation that system\\  is permitted to run for\end{tabular}                                         \\ \hline
+            threshold\_step\_size                & 0.3                    & \begin{tabular}[c]{@{}l@{}}An amount that will be added or deleted to\\  threshold if specie size is higher or \\ lower than desired\end{tabular} \\ \hline
+            problem\_fitness\_threshold          & 390                    & \begin{tabular}[c]{@{}l@{}}A threshold for fitness that will signify\\ that a genome has finished\\ successfully if exceeded\end{tabular}         \\ \hline
+            top\_proc\_to\_reproduce             & 0.2                    & \begin{tabular}[c]{@{}l@{}}A percent of top genomes in every species' \\ that is enabled to reproduce\end{tabular}                                \\ \hline
+            cross\_specie\_reproduction          & True                   & Can organisms pick partners out of their species                                                                                                  \\ \hline
+            cross\_specie\_weight\_modifier      & 0.3                    & \begin{tabular}[c]{@{}l@{}}Modifier applied to chance of out-of-specie\\  reproduction\end{tabular}                                               \\ \hline
+            enable\_elitism                      & True                   & \begin{tabular}[c]{@{}l@{}}Can best organisms in given generation be\\  passed to next generation\end{tabular}                                    \\ \hline
+            elitism\_percentage                  & 0.05                   & \begin{tabular}[c]{@{}l@{}}How much of best organism from certain\\  generation can be passed to the next\end{tabular}                            \\ \hline
+            dynamic\_threshold                   & True                   & \begin{tabular}[c]{@{}l@{}}A dynamic threshold tries to change\\  threshold to keep the specie size to\\  the given target\end{tabular}           \\ \hline
+            initial\_threshold                   & 3                      & \begin{tabular}[c]{@{}l@{}}An initial threshold value for calculating\\  distance between two\\  genomes during speciation\end{tabular}           \\ \hline
+            \end{tabular}%
+            }
+        \end{table}
         TODO - tabelka z domyslnymi wartosciami konfiguracji
         TODO - opis pola "meta" (disjoint fields for probolems, so that they cannot overwrite each other's fields, and so that they cannot overwrite other important fields)
         \subsubsection{Problem-specific adjustments}
@@ -92,6 +143,7 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
         TODO - using gymnasium environment 
         TODO - adjusting fitness value from bipedal walker
         thoink of more
+        
 \section{Experimental results}
 [here write about results of experiments]
 \section{Conclusions}
