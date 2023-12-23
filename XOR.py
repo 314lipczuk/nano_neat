@@ -34,10 +34,12 @@ def every_generation(p:Population):
             f.close()
             print(f"Saved model {p.serial_number} {name}")
 
-
 def after_finished(p:Population):
     champ = p.champion
-    champ.calculate_fitness(visible=True)
+    #champ.calculate_fitness(visible=True)
+    champStats = f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
+    with open(f"{p.path}/champStats.txt", "w") as f:
+        f.write(champStats)
 
 XorConfig = Config(
     activation=activation_function,

@@ -40,7 +40,11 @@ def every_generation(p:Population):
 
 def after_finished(p:Population):
     champ = p.champion
-    champ.calculate_fitness(visible=True)
+    #champ.calculate_fitness(visible=True)
+    # generation n_nodes n_connections
+    champStats = f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
+    with open(f"{p.path}/champStats.txt", "w") as f:
+        f.write(champStats)
 
 DefaultAcrobotConfig = Config(
     activation=activation_function,

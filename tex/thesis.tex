@@ -24,7 +24,7 @@
 \section{Introduction}
 \subsection{Abstract}
 In this work I have implemented a fully functional NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
-with a focus on simplicity and readibility. The generic core algorithm is ~400loc of Python, and to use it in a specific problem requires about ~70 
+with a focus on simplicity and readibility. The generic core algorithm is ~400 lines of Python code, and to use it in a specific problem requires about ~70 
 more. I would argue that because of that it is a good starting point for anyone interested in learning about NEAT, as it is easy to understand and
 easy to modify. The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalWalker. 
 good resource for learning about NEAT.
@@ -133,7 +133,7 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             }
         \end{table}
         The fields presented here are all generic over the problem the algorithm is trying to solve. If a problem requires a specific configuration,
-        (like a name of environment in gymnasium, or a offset for calculating fitness) it is stored in the meta field. This implementation was chosen
+        (like a name of environment in gymnasium, or an offset for calculating fitness) it is stored in the meta field. This implementation was chosen
         to make sure users cannot accidentally overwrite an iternal field of the Config object, and also to provide a clear boundary between NEAT config 
         and problem-specific config, ensuring a more generic structure.
         \subsubsection{Problem-specific adjustments}
@@ -163,10 +163,11 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             \end{itemize}
 \section{Experimental results}
 \begin{itemize}
-    \item XOR   
-    The xor problem was tested with a population of 50, 100 tries and generation threshold of 300. The solution was found in 87 trials, and mean
-    generations it took to find the solution was 120.5, with standard deviation of 63.6 generations.
+    \item XOR
+    The xor problem on default configuration described before was tested with a population of 50, 100 tries and generation threshold of 300. The solution was found in 87 trials, and the mean
+    generations it took to find the solution in those was 120.5, with standard deviation of 63.6 generations.
     \item Acrobot 
+    
     \item Cartpole
     The xor problem was tested with a population of 50 and generation threshold of 300. The results are presented in the table below.
 \end{itemize}

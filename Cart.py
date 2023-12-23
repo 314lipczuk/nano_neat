@@ -42,7 +42,10 @@ def every_generation(p:Population):
 
 def after_finished(p:Population):
     champ = p.champion
-    champ.calculate_fitness(visible=True)
+    #champ.calculate_fitness(visible=True)
+    champStats = f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
+    with open(f"{p.path}/champStats.txt", "w") as f:
+        f.write(champStats)
 
 DefaultCartConfig = Config(
     activation=activation_function,
