@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1703268127 "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" "thesis.pdf" "thesis" 1703268128 0
-  "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" 1703268127 16706 9a47aac3f9615f7c26ed6c08b96b11d4 ""
+["pdflatex"] 1703353744 "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" "thesis.pdf" "thesis" 1703353745 0
+  "/Users/polya/workshop/playgrounds/NEAT_playground/nano_neat/tex/thesis.tex" 1703353744 17629 b46c10a2d3180ffe9e708c4a83fd2fd9 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1678549815 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/map/fontname/texfonts.map" 1678549815 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1678549815 4609045 74543da1ab9350ba886fce0af49a2cfd ""
@@ -46,9 +46,9 @@
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg" 1678549815 678 4792914a8f45be57bb98413425e4c7af ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/web2c/texmf.cnf" 1678549815 40748 4081c8bc921e56c865f975bd762e388c ""
   "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1678549815 7884066 80f25e60658dfc5dcdb6ade5d53dd316 ""
-  "thesis.aux" 1703268128 1959 4afcaa5451cddd3ee2607a7d0dc146bb "pdflatex"
-  "thesis.tex" 1703268127 16706 9a47aac3f9615f7c26ed6c08b96b11d4 ""
-  "thesis.toc" 1703268128 1189 b9de2f11278e600430380e695573c083 "pdflatex"
+  "thesis.aux" 1703353745 1959 9d59a6d3ffd63e13ef628964ec531fa0 "pdflatex"
+  "thesis.tex" 1703353744 17629 b46c10a2d3180ffe9e708c4a83fd2fd9 ""
+  "thesis.toc" 1703353745 1189 a2bb7e143d4b9675a75eb13f92082f2a "pdflatex"
   (generated)
   "thesis.aux"
   "thesis.log"

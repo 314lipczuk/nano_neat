@@ -24,7 +24,9 @@
 \section{Introduction}
 \subsection{Abstract}
 In this work I have implemented a fully functional NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
-with a focus on simplicity and readibility. The core algorithm is ~400loc of Python, and therefore is a 
+with a focus on simplicity and readibility. The generic core algorithm is ~400loc of Python, and to use it in a specific problem requires about ~70 
+more. I would argue that because of that it is a good starting point for anyone interested in learning about NEAT, as it is easy to understand and
+easy to modify. The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalWalker. 
 good resource for learning about NEAT.
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
@@ -103,7 +105,7 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             c1                                   & 1                      & \begin{tabular}[c]{@{}l@{}}Modifier for excess genes count when calculating\\  distance between genomes\end{tabular}                              \\ \hline
             c2                                   & 1                      & \begin{tabular}[c]{@{}l@{}}Modifier for disjoint genes count when calculating\\  distance between genomes\end{tabular}                            \\ \hline
             c3                                   & 0.8                    & \begin{tabular}[c]{@{}l@{}}Modifier for weight differences when calculating\\  distance between genomes\end{tabular}                              \\ \hline
-            meta                                 & \{\}                   & A place to store problem-specific variables.                                                                                                      \\ \hline
+            meta                                 & \{\}                   & A dictionary to store problem-specific variables.                                                                                                      \\ \hline
             print\_generation                    &                        & \begin{tabular}[c]{@{}l@{}}A user-defined function for printing generation \\ during training\end{tabular}                                        \\ \hline
             every\_generation                    &                        & \begin{tabular}[c]{@{}l@{}}A function being executed after every generation.\\  Useful for saving information about learning\end{tabular}         \\ \hline
             after\_finished                      &                        & \begin{tabular}[c]{@{}l@{}}A function being executed after a problem\\  is finished\end{tabular}                                                  \\ \hline
@@ -152,7 +154,11 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
             programmed to cut minimum environment fitness value to a -100, and then offset that by 100 to make sure the fitness was always in range
             of 0-400. This fixed the problem of adjusted fitness calculation, but also forced us to increase the fitness threshold 
             for the problem by a 100. For clarity and coherent experience, custom printing function was used to print the 'environment' fitness
-            for the problem, as it is more intuitive.
+            for the problem, as it is more intuitive. During the testing of this setup, it was discovered that 
+            the agent would often get stuck in an unrecoverable position and slow down the simulation by having to wait for the upper limit of time
+            for the task to be reached. To fix this behavior, an additional variable was introduced to the model evaluation loop. It
+            tracked the amount of timesteps since last improvement in the environment, and terminated the simulation if that number exceeded 
+            a certain constant amount. This helped to increase the speed of learning, while not affecting the quality of the model in any way.
             Walker also needed its own activation function, as the baseline sigmoid function was not able to provide values in range [-1, 1].
             \end{itemize}
 \section{Experimental results}
@@ -161,7 +167,6 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
     The xor problem was tested with a population of 50, 100 tries and generation threshold of 300. The solution was found in 87 trials, and mean
     generations it took to find the solution was 120.5, with standard deviation of 63.6 generations.
     \item Acrobot 
-
     \item Cartpole
     The xor problem was tested with a population of 50 and generation threshold of 300. The results are presented in the table below.
 \end{itemize}
