@@ -178,8 +178,19 @@ todo[idk, write about original paper here? or maybe about other implemetations?]
     connections, with respective standard deviations being 0.31 and 0.66.
 
 \end{itemize}
-[here write about results of experiments]
 \section{Conclusions}
+From our results, there can be many conclusions. The problems do not constitute a linear progression of 
+difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
+as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
+of exploring its current topology. 
+The case of bipedalwalker is a curious one. The model can reliably learn to walk to the end of the map (corresponding
+to this is fitness of about ~150-200). It cannot however finish the course with a cumulative fitness required by the
+environment. How is that possible? The environment in bipedalwalker has total fitness requirement of 300, divided
+into small chunks given to an agent by moving forward. However, environment also keeps track of the movement made
+by the agent, and reduces reward based on the 'energy-efficiency' of its movements. In this situation agent 
+gets terminated by the environment (has walked to the end of the map), but doesn't have enough fitness to be 
+qualified as a win. 
+TODO- Xor vs xor2
 [here write conclusions about results of experiments]
 \section{Future work}
 \section{Bibliography}
