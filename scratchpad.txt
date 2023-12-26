@@ -1,0 +1,21 @@
+
+Basic xor with basic config
+{'averagegenerations': 124.94298245614036
+ 'std_dev_generations': 63.40159382757574
+ 'averagenodes': 9.484649122807017
+ 'std_dev_nodes': 3.035568584511178
+ 'averageconnections': 20.595394736842106
+ 'std_dev_connections': 8.229819860234011}
+  count 912 unsolved: 90
+
+Xor with bias node added and default config
+{'averagegenerations': 136.3189448441247
+ 'std_dev_generations': 70.80089250639425
+ 'averagenodes': 11.035971223021583
+ 'std_dev_nodes': 3.5917105574069677
+ 'averageconnections': 23.37769784172662
+ 'std_dev_connections': 9.839114984026367}
+ count 834 unsolved: 168
+
+Xor with config change #1:
+
