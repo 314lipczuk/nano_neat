@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{graphicx} % Required for inserting images
+\bibliographystyle{unsrt}
 
 % table stuff
  \usepackage[normalem]{ulem}
@@ -23,29 +24,43 @@
 \tableofcontents
 \section{Introduction}
 \subsection{Abstract}
-In this work I have implemented a fully functional NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
+In this work I have implemented a fully functional  NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
 with a focus on simplicity and readibility. The generic core algorithm is ~400 lines of Python code, and to use it in a specific problem requires about ~70 
 more. I would argue that because of that it is a good starting point for anyone interested in learning about NEAT, as it is easy to understand and
 easy to modify. The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalWalker. 
 good resource for learning about NEAT.
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
-\section{Related work}
-todo[idk, write about original paper here? or maybe about other implemetations?]
+\section{The NEAT algorithm}
+The NEAT algoritm was first described in 2002 by Kenneth O. Stanley and Risto Miikkulainen in their paper \cite{originalNeat}.
+Core idea behind it is to use an evolutionary algorithm to evolve a neural network. This idea has been tried before (for example, in TWEANNs),
+but NEAT is innovating on this by introducing a few key ideas. One of them is the concept of starting from a minimal structure (as opposed to random strucure in TWEANNs)
+for each problem. 
+That means, that every solution starts from a single input layer connected densely to the output layer. Creating any additional structure is up to the
+algorithm. Another key idea is the concept of innovation numbers. This one comes from the observation, that in a system that can evolve both
+topology and weights, a lot of the time system can represent similar solutions with a widely different structure and encoding. This makes it harder for further
+combining working parts of different genomes. This is solved by having a global innovation number for the whole population,
+and assigning it to each new conneection. This way, we can tell when two genomes separately evolved the same connection, thereby making it easier for them to
+combine. Last key idea is the concept of speciation. This is a way to make sure that the population is diverse,
+and that the algorithm is not stuck in a local minimum. This works by dividing the population into species by calculating how different (in both structure and weights)
+each genome is form the randomly selected representative of a specie. The abstraction of a specie is useful because they represent a group of genomes that are 
+trying out a similar solution to the problem, and a lot of the configuration metaparameters focus on the behavior of species. To make them relevant,
+NEAT algorithm evaluates fitness of each genome only in the relative context of its specie (This is called adjusted fitness, because it's adjusted to the context of its specie).
+This means that it's unlikely that one specie will dominate the whole population and end up in a local minimum.
 \section{Methodology}
     \subsection{Problems used to test the implementation}
         \subsubsection{XOR}
         Xor problem is a simple problem used mostly to test if the algorithm can start generating structure. 
         This is because XOR function is non linearly separable - it cannot be solved by the simple topology that neat starts with.
         To solve it, the algorithm needs to evolve a hidden layer. 
-        This problem is also used to test if the algorithm can generate minimal structure - the original paper 
-        todo[CITATION] states that the algoritm can solve the problem with 1 node in the hidden layer (However,
+        This problem is also used to test if the algorithm can generate minimal structure - the original paper \cite{originalNeat}
+        states that the algoritm can solve the problem with 1 node in the hidden layer (However,
         it does require that the starting topology has an additional input node designated
         as bias, connected straight to the output). This requirement is not presented as a builtin configuration variant for this specific problem , as
         it is trivial to add it using basic configuration change (add 1 more input that always returns "1", and add a function that 
         hooks start of the population to set its connection weight to the output as 1).
         \subsubsection{Cartpole}
-        Cartpole is a problem taken from Farama Foundation's Gymnasium library. It is a classic control problem, 
+        Cartpole is a problem taken from Farama Foundation's Gymnasium library \cite{gymnasium}. It is a classic control problem, 
         where an agent tries to balance a pole on a cart. The agent's observation space consists of cart's 
         position, velocity, angle of the pole and its angular velocity. The agent can move the cart left or right.
         This problem is a test of the implementation's ability to solve a basic real-world problem, but contrary 
@@ -191,7 +206,14 @@ by the agent, and reduces reward based on the 'energy-efficiency' of its movemen
 gets terminated by the environment (has walked to the end of the map), but doesn't have enough fitness to be 
 qualified as a win. 
 TODO- Xor vs xor2
-[here write conclusions about results of experiments]
+
+Xor 1 av. generations 124.94, std 63.4, av\_nodes 9.48 avg\_cons 8.22 
+Xor 2 av. generations 136.31, std 70.5, av\_nodes 3.5, av\_cons 23.37
+
+Upon closer inspection, the results of default xor run and the xor run with a 'bias' node are the reverse of what they should be.
+The bias node should make the problem easier, but it seems to make it harder.
+
 \section{Future work}
 \section{Bibliography}
+\bibliography{references}
 \end{document}
