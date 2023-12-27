@@ -31,22 +31,29 @@ easy to modify. The implementation was tested on 4 problems: XOR, Cartpole, Acro
 good resource for learning about NEAT.
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
-\section{The NEAT algorithm}
-The NEAT algoritm was first described in 2002 by Kenneth O. Stanley and Risto Miikkulainen in their paper \cite{originalNeat}.
-Core idea behind it is to use an evolutionary algorithm to evolve a neural network. This idea has been tried before (for example, in TWEANNs),
-but NEAT is innovating on this by introducing a few key ideas. One of them is the concept of starting from a minimal structure (as opposed to random strucure in TWEANNs)
-for each problem. 
-That means, that every solution starts from a single input layer connected densely to the output layer. Creating any additional structure is up to the
-algorithm. Another key idea is the concept of innovation numbers. This one comes from the observation, that in a system that can evolve both
-topology and weights, a lot of the time system can represent similar solutions with a widely different structure and encoding. This makes it harder for further
-combining working parts of different genomes. This is solved by having a global innovation number for the whole population,
-and assigning it to each new conneection. This way, we can tell when two genomes separately evolved the same connection, thereby making it easier for them to
-combine. Last key idea is the concept of speciation. This is a way to make sure that the population is diverse,
-and that the algorithm is not stuck in a local minimum. This works by dividing the population into species by calculating how different (in both structure and weights)
-each genome is form the randomly selected representative of a specie. The abstraction of a specie is useful because they represent a group of genomes that are 
-trying out a similar solution to the problem, and a lot of the configuration metaparameters focus on the behavior of species. To make them relevant,
-NEAT algorithm evaluates fitness of each genome only in the relative context of its specie (This is called adjusted fitness, because it's adjusted to the context of its specie).
-This means that it's unlikely that one specie will dominate the whole population and end up in a local minimum.
+\section {The NEAT algorithm new}
+The NEAT algorithm, standing for NeuroEvolution of Augmenting Topologies, was first introduced in 2002 by Kenneth O. Stanley
+and Risto Miikkulainen in their paper \cite{originalNeat}. This groundbreaking work not only proposed a novel approach to evolving neural
+networks but also addressed some of the inherent challenges faced by previous methods such as TWEANNs (Topology- and Weight-Evolving
+Artificial Neural Networks).
+At the heart of NEAT is the principle of starting with the simplest possible network structure for each problem. Unlike previous
+approaches that began with random and potentially complex structures, NEAT initializes with a basic network where the input
+layer is fully connected to the output layer, devoid of any hidden nodes. This minimalistic starting point allows the algorithm
+to incrementally and efficiently discover the necessary complexity, avoiding the pitfalls of starting with an overly complicated or suboptimal structure.
+One of the cornerstone features of NEAT is the use of innovation numbers. This concept arose from the observation that systems
+capable of evolving both topology and weights often represent similar solutions through vastly different structures and encodings.
+This diversity, while beneficial for exploration, can hinder the effective combination of successful traits from different genomes.
+To address this, NEAT assigns a unique global innovation number to each new connection in the population. This numbering system helps 
+in identifying when two genomes independently evolve identical connections, thus facilitating more effective crossover by aligning similar structures.
+Another critical aspect of NEAT is the concept of speciation. This mechanism ensures diversity within the population and prevents
+premature convergence to local optima. In NEAT, the population is divided into species based on structural and weight differences
+from a randomly chosen representative of each species. These species essentially represent subgroups of genomes exploring similar 
+solutions, allowing NEAT to maintain a rich variety of strategies within the population. Speciation plays a crucial role in preserving
+innovative structures that might otherwise be lost in a homogeneous population.
+Furthermore, NEAT evaluates the fitness of each genome within the context of its species, a process termed "adjusted fitness."
+This relative evaluation ensures that a single, highly fit species does not dominate the entire population, thereby maintaining
+a healthy diversity of solutions and preventing stagnation in local minima. Adjusted fitness encourages the exploration
+of various niches in the solution space, fostering the development of novel and potentially superior neural network architectures.
 \section{Methodology}
     \subsection{Problems used to test the implementation}
         \subsubsection{XOR}
