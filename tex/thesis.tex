@@ -60,12 +60,12 @@ of various niches in the solution space, fostering the development of novel and 
         Xor problem is a simple problem used mostly to test if the algorithm can start generating structure. 
         This is because XOR function is non linearly separable - it cannot be solved by the simple topology that neat starts with.
         To solve it, the algorithm needs to evolve a hidden layer. 
-        This problem is also used to test if the algorithm can generate minimal structure - the original paper \cite{originalNeat}
+        This problem is thus used to test if the algorithm can generate minimal structure - the original paper \cite{originalNeat}
         states that the algoritm can solve the problem with 1 node in the hidden layer (However,
         it does require that the starting topology has an additional input node designated
-        as bias, connected straight to the output). This requirement is not presented as a builtin configuration variant for this specific problem , as
-        it is trivial to add it using basic configuration change (add 1 more input that always returns "1", and add a function that 
-        hooks start of the population to set its connection weight to the output as 1).
+        as bias, connected straight to the output). Both of these conditions are tested in this work.
+        XOR problem is the ideal problem to test the various effects of the algorithm's configuration, as it is simple enough to be
+        evaluated quickly even on home computers, and even running it for a thousand times is not a problem.
         \subsubsection{Cartpole}
         Cartpole is a problem taken from Farama Foundation's Gymnasium library \cite{gymnasium}. It is a classic control problem, 
         where an agent tries to balance a pole on a cart. The agent's observation space consists of cart's 
@@ -186,8 +186,18 @@ of various niches in the solution space, fostering the development of novel and 
 \section{Experimental results}
 \begin{itemize}
     \item XOR
-    The xor problem on default configuration described before was tested with a population of 50, 100 tries and generation threshold of 300. The solution was found in 87 trials, and the mean
-    generations it took to find the solution in those was 120.5, with standard deviation of 63.6 generations.
+        \begin{table}[H]
+            \resizebox{\columnwidth}{!}{%
+            \begin{tabular}{|l|l|l|l|l|l|}
+            \hline
+                                                                                                 & Found solutions & \begin{tabular}[c]{@{}l@{}}Average generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}Std. dev. generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}average nodes\\ in final structure\end{tabular} & \begin{tabular}[c]{@{}l@{}}average connections\\ in final structure\end{tabular} \\ \hline
+            Basic config                                                                         & 912 / 1000      & 124.94                                                                       & 63.40                                                                          & 9.48                                                                       & 20.59                                                                            \\ \hline
+            Bias node added                                                                      & 834 / 1000      & 136.31                                                                       & 70.80                                                                          & 11.03                                                                      & 23.37                                                                            \\ \hline
+            Dynamic threshold off                                                                & 634 / 1000      & 125.62                                                                       & 68.36                                                                          & 10.72                                                                      & 22.39                                                                            \\ \hline
+            \begin{tabular}[c]{@{}l@{}}Dynamic threshold off\\  and bias node added\end{tabular} & 339 / 1000      & 132.03                                                                       & 72.10                                                                          & 12.55                                                                      & 25.57                                                                            \\ \hline
+            \end{tabular}%
+            }
+            \end{table}
     \item Acrobot 
     Acrobot problem on default configuration solved the problem in all 1000 trials, with average
     generations being 4.45, standard deviation being 3.5. We also measured mean and standard deviation
@@ -205,21 +215,48 @@ From our results, there can be many conclusions. The problems do not constitute 
 difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
 as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
 of exploring its current topology. 
-The case of bipedalwalker is a curious one. The model can reliably learn to walk to the end of the map (corresponding
-to this is fitness of about ~150-200). It cannot however finish the course with a cumulative fitness required by the
-environment. How is that possible? The environment in bipedalwalker has total fitness requirement of 300, divided
-into small chunks given to an agent by moving forward. However, environment also keeps track of the movement made
-by the agent, and reduces reward based on the 'energy-efficiency' of its movements. In this situation agent 
-gets terminated by the environment (has walked to the end of the map), but doesn't have enough fitness to be 
-qualified as a win. 
-TODO- Xor vs xor2
-
-Xor 1 av. generations 124.94, std 63.4, av\_nodes 9.48 avg\_cons 8.22 
-Xor 2 av. generations 136.31, std 70.5, av\_nodes 3.5, av\_cons 23.37
-
-Upon closer inspection, the results of default xor run and the xor run with a 'bias' node are the reverse of what they should be.
-The bias node should make the problem easier, but it seems to make it harder.
-
+\subsection{XOR trials}
+    The results of XOR trials are suprising. They do show that the algorithm can solve the task, and that the default configuration is suitable for it.
+    However, there are two things that are worth noting. First, the usage of a bias node seems to make the problem harder to solve, 
+    which is the opposite of what we would expect. This could be due to the fact that having a bias node initially 
+    makes the genome more susceptible to meaningless mutation of one more node and two more connections,
+    instead of focusing on evolving the correct structure.
+    Second, the lack of dynamic threshold for specie distance calculation seems to make the problem harder to solve.
+    This is less suprising, as the dynamic threshold is a mechanism that is supposed to help the algorithm in situations
+    where the problem is hard to solve. What is suprising about this is that the difference in performance is so big for
+    such a simple problem. This solution is also not very robust compared to the original one, achieving only 91.2\% success rate
+    compared with 100\% of the original, and taking far more generations to find the solution.
+\subsection{Cartpole}
+    The results of cartpole trials are not very useful. The problem is solved in all 1000 trials, but the results suggest, that 
+    this problem is too easy for the algorithm to be a good test of its capabilities. The average number of generations is 2.77, 
+    meaning that the algorithm is able to solve the problem in less than 3 generations on average. To solve cartpole problem, the
+    algorithm doesn't need to evolve any structure, as the starting topology is enough to solve the problem. The problem is therefore
+    not inspected further.
+\subsection{Acrobot}
+    Solution to the acrobot problem is showing more promise than the cartpole, but ultimately also fails to provide a 
+    good challenge to the algorithm. The problem is solved in all 1000 trials, and even though the average number of generations is up, it 
+    is still only 4.45. The average number of nodes and connections in the solution is also very low, with 8.95 and 17.07 respectively. 
+    Given that the minimal starting genome for this problem has 8 nodes and 15 connections, it is safe to say this problem can be 
+    categorized as trivial.
+\subsection{Walker}
+    The case of bipedalwalker is a curious one. The model can reliably learn to walk to the end of the map (corresponding
+    to this is fitness of about ~150-200). It cannot however finish the course with a cumulative fitness required by the
+    environment. How is that possible? The environment in bipedalwalker has total fitness requirement of 300, divided
+    into small chunks given to an agent by moving forward. However, environment also keeps track of the movement made
+    by the agent, and reduces reward based on the 'energy-efficiency' of its movements. In this situation agent 
+    gets terminated by the environment (has walked to the end of the map), but doesn't have enough fitness to be 
+    qualified as a win. 
+    This is problematic, as the fitness function used by the algorithm (and the gymnasium environment
+    itself) is not suited well for teaching agents to walk efficiently. There is enough noise inbetween
+    randomly generated maps, that the difference in fitness from a good run and a bad run is more reliant
+    on the map itself than the agent's efficiency in performance.
+     That is because once the agent learns to walk, the reward it gets from simply moving forward is higher than any influence
+     of the energy-efficiency correction. This means that the agent is not incentivized to walk efficiently, and
+     once it gets to the end of the map consistently, there is no clear way for it to improve its fitness (the 
+     act of walking efficiently seems to need far more structure, which is hard to evolve when there is small 
+     reward to be gained at this point.
+      )
+    are very long, with the fitness being reduced by the environment constituting a very small part of the total fitness missing.
 \section{Future work}
 \section{Bibliography}
 \bibliography{references}
