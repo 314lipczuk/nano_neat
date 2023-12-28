@@ -51,6 +51,8 @@ XorConfig = Config(
     every_generation=every_generation,
     after_finished=after_finished,
     max_iterations=300,
+    allowRecurrent=False,
+    DYNAMIC_THRESHOLD=True
     )
 
 def main():

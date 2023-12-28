@@ -3,7 +3,7 @@ import math
 
 def calculate_std_dev(list, n ,mean): return math.sqrt(sum( [(i-mean)**2 for i in list] ) /n )
 
-basepath = 'tmp/XOR'
+basepath = 'tmp/XOR2'
 first = list(os.walk(basepath))[0]
 dirs = first[1]
 average_generations = 0

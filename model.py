@@ -108,8 +108,14 @@ class Node:
         return f"{self.node_type} Node{self.node_id}, L{self.node_layer}"
 
     @staticmethod 
-    def get_node_id(genome):
-        return len(genome.nodes)
+    def get_node_id(genome, from_conn=None):
+        if from_conn is not None:
+            tmp = Node.next_node_id
+            Node.next_node_id +=1
+            return tmp
+        else:
+            Node.next_node_id = len(genome.nodes) + 1
+            return len(genome.nodes)
 
 class Connection:
     next_innov_id=0
@@ -174,7 +180,7 @@ class Genome:
         conn_to_pick = random.choice([c for c in self.connections if c.enabled and c.is_recurrent == False])
         conn_to_pick.enabled = False
         
-        new_node = Node(node_id=Node.get_node_id(self), layer=1, node_type='hidden')
+        new_node = Node(node_id=Node.get_node_id(self, from_conn=conn_to_pick.innov_id), layer=1, node_type='hidden')
         c1 = Connection(innov_id=Connection.get_innov_id((conn_to_pick.in_node, new_node.node_id)),\
                         in_node=conn_to_pick.in_node, out_node=new_node.node_id,\
                         weight=1.0, enabled=True, is_recurrent=False)
@@ -287,7 +293,6 @@ class Genome:
             nodes = [n for n in self.nodes if n.node_layer == l]
             for n in nodes:
                 conns = [c for c in self.connections if c.out_node == n.node_id and c.enabled]
-                #n.sum_input = sum(c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output for c in conns)
                 n.sum_input = 0
                 for c in conns:
                     n.sum_input += c.weight * [nd for nd in self.nodes if c.in_node == nd.node_id][0].sum_output
@@ -414,7 +419,7 @@ class Population:
         counter = 0
 
         if self.config.ELITISM:
-            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor( self.config.size * self.config.ELITISM_PERCENTAGE)] 
+            best = sorted(self.organisms, key=lambda x:x.fitness, reverse=True)[:math.floor(self.config.size * self.config.ELITISM_PERCENTAGE)] 
             for b in best: new_population.append(copy.deepcopy(b))
 
         for s in self.species:
