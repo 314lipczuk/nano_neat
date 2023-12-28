@@ -277,7 +277,7 @@ class Genome:
                         title=f"in:{c.innov_id}\nw:{c.weight}",\
                         hidden=(hide_disabled and (not c.enabled)))
         nt.from_nx(graph) 
-        nt.show(f'{self.EXPERIMENT_PATH}/{name}.html')
+        nt.show(f'{self.config.EXPERIMENT_PATH}/{name}.html')
 
     def load_inputs(self, inputs):
         for n, i in zip(list(sorted([n for n in self.nodes if n.node_type == 'input' ], key=lambda x: x.node_id)), inputs ):

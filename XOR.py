@@ -36,6 +36,7 @@ def every_generation(p:Population):
 
 def after_finished(p:Population):
     champ = p.champion
+    champ.save_brain(f"{p.path}/champ.pkl")
     #champ.calculate_fitness(visible=True)
     champStats = f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
     with open(f"{p.path}/champStats.txt", "w") as f:

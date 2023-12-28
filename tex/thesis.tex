@@ -221,6 +221,12 @@ of exploring its current topology.
     which is the opposite of what we would expect. This could be due to the fact that having a bias node initially 
     makes the genome more susceptible to meaningless mutation of one more node and two more connections,
     instead of focusing on evolving the correct structure.
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.8\textwidth]{xor_topology_example.png}
+        \caption{An example topology of a genome that solves XOR problem without bias node }
+        \label{fig:xor_bias}
+    \end{figure}
     Second, the lack of dynamic threshold for specie distance calculation seems to make the problem harder to solve.
     This is less suprising, as the dynamic threshold is a mechanism that is supposed to help the algorithm in situations
     where the problem is hard to solve. What is suprising about this is that the difference in performance is so big for
