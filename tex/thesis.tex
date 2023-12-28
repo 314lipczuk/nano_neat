@@ -25,13 +25,15 @@
 \section{Introduction}
 \subsection{Abstract}
 In this work I have implemented a fully functional  NeuroEvolution of Augumenting Topologies (NEAT) algorithm 
-with a focus on simplicity and readibility. The generic core algorithm is ~400 lines of Python code, and to use it in a specific problem requires about ~70 
-more. I would argue that because of that it is a good starting point for anyone interested in learning about NEAT, as it is easy to understand and
-easy to modify. The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalWalker. 
-good resource for learning about NEAT.
+with a focus on simplicity and readibility. The implemenmtation aims to be a good resource for learning and teaching about NEAT.
+The generic core algorithm is ~400 lines of Python code, and to adapt it to a specific problem requires about ~70 
+more. I would argue that the terseness of source code makes it a good starting point for anyone interested in understanding NEAT, 
+as it is easy to comprehend and easy to modify.
+The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalWalker. 
+
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
-\section {The NEAT algorithm new}
+\section {The NEAT algorithm}
 The NEAT algorithm, standing for NeuroEvolution of Augmenting Topologies, was first introduced in 2002 by Kenneth O. Stanley
 and Risto Miikkulainen in their paper \cite{originalNeat}. This groundbreaking work not only proposed a novel approach to evolving neural
 networks but also addressed some of the inherent challenges faced by previous methods such as TWEANNs (Topology- and Weight-Evolving
@@ -40,7 +42,7 @@ At the heart of NEAT is the principle of starting with the simplest possible net
 approaches that began with random and potentially complex structures, NEAT initializes with a basic network where the input
 layer is fully connected to the output layer, devoid of any hidden nodes. This minimalistic starting point allows the algorithm
 to incrementally and efficiently discover the necessary complexity, avoiding the pitfalls of starting with an overly complicated or suboptimal structure.
-One of the cornerstone features of NEAT is the use of innovation numbers. This concept arose from the observation that systems
+One of the main features of NEAT is the use of innovation numbers. This concept arose from the observation that systems
 capable of evolving both topology and weights often represent similar solutions through vastly different structures and encodings.
 This diversity, while beneficial for exploration, can hinder the effective combination of successful traits from different genomes.
 To address this, NEAT assigns a unique global innovation number to each new connection in the population. This numbering system helps 
@@ -83,7 +85,7 @@ of various niches in the solution space, fostering the development of novel and 
         with its fitness being judged based on its cumulative performance across these runs.
         \subsubsection{BipedalWalker}
         BipedalWalker is the hardest problem used in this work. It is a problem taken from Farama Foundation's
-        Gymnasium library. The agent tries to control a bipedal robot and make it walk to the end of the map, while
+        Gymnasium library \cite{gymnasium}. The agent tries to control a bipedal robot and make it walk to the end of the map, while
         making its movements energy-efficient. The observation space is significantly bigger than in previous problems,
         consisting of 24 values. The action space somewhat similar, but due to the problem specifics, requiring a 
         much more precise control. 
