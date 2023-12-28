@@ -18,7 +18,7 @@ def activation_function(self, x):
 def calculate_fitness(self, visible=False):
     if visible:
         experiment_name = self.config.meta["gym_environment"]
-        environment = gym.make(experiment_name, render_mode='human')
+        environment = gym.make(experiment_name, render_mode='human', hardcore=True)
     else:
         environment = Population.env
     observation,info = environment.reset()
@@ -34,7 +34,7 @@ def calculate_fitness(self, visible=False):
         observation, reward, terminated, truncated, info = environment.step(action)
         if reward < 0.01:
             not_moving_counter += 1
-            if not_moving_counter > 30:
+            if not_moving_counter > 120:
                 done = True
         else:
             not_moving_counter = 0
@@ -87,7 +87,7 @@ DefaultWalkerConfig = Config(
 def main():
     p = Population(config=DefaultWalkerConfig)
     experiment_name = DefaultWalkerConfig.meta["gym_environment"]
-    Population.env = gym.make(experiment_name, render_mode='none')
+    Population.env = gym.make(experiment_name, render_mode='none', hardcore=True)
     p.run()
 
 if __name__ == "__main__":
