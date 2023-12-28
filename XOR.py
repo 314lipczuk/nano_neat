@@ -59,5 +59,4 @@ def main():
     p = Population(config=XorConfig)
     p.run()
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
