@@ -90,6 +90,24 @@ of various niches in the solution space, enabling the development of novel and p
         consisting of 24 values. The action space somewhat similar, but due to the problem specifics, requiring a 
         much more precise control. 
     \subsection{Implementation details}
+        \subsubsection{Technology choices}
+        The implementation is written in Python 3.11.5, and the dependencies needed for the core to work are:
+        \begin{itemize}
+            \item dill - used for serializing and deserializing particular genomes both for inspection and debugging purpouses. 
+            \item networkx - used for creating the graph of the genome's tooplogy 
+            \item pyvis - used for visualizing the graph of genome's topology
+        \end{itemize}
+        Additionaly, the problems sometimes require additional dependencies. Those being:
+        \begin{itemize}
+            \item gymnasium \cite{gymnasium} - used in cartpole, acrobot and bipedalwalker problems to simulate the environment
+            \item torch \cite{Pytorch} - used in problems that require tweaking the activation function, as torch primitives enable easy control over the numerical precision. 
+                It also enabled experiments with different approaches to evaluating a network - current implementation simply divides the genome into layers and 
+                computes the output of each layer sequentially. This is not very performant, but it is easy to implement and understand. In the future,
+                an alternative torch backend may be considered, where a genome compiles into a torch model, and then the evaluation is done by passing the input
+                through it.
+        \end{itemize}
+        The choice of Python was made due to its simplicity and ability to convey the ideas of the algorithm in a concise way.
+        Standard library of Python was used extensively to make sure the implementation is easy to follow.
         \subsubsection{Core algorithm}
         The core algorithm if NEAT is implemented in ~400 lines of Python in model.py
         The base for a single agent is a class called Genome. It contains a list of nodes and a list of connections for this particular 
