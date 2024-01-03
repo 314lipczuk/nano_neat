@@ -35,8 +35,8 @@ The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalW
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
 \section {The NEAT algorithm}
 The NEAT algorithm, standing for NeuroEvolution of Augmenting Topologies, was first introduced in 2002 by Kenneth O. Stanley
-and Risto Miikkulainen in their paper \cite{originalNeat}. This groundbreaking work not only proposed a novel approach to evolving neural
-networks but also addressed some of the inherent challenges faced by previous methods such as TWEANNs (Topology- and Weight-Evolving
+and Risto Miikkulainen in their paper \cite{originalNeat}. This work not only proposed a novel approach to evolving neural
+networks but also addressed some of the challenges faced by previous methods such as TWEANNs (Topology and Weight-Evolving
 Artificial Neural Networks).
 At the heart of NEAT is the principle of starting with the simplest possible network structure for each problem. Unlike previous
 approaches that began with random and potentially complex structures, NEAT initializes with a basic network where the input
@@ -55,7 +55,7 @@ innovative structures that might otherwise be lost in a homogeneous population.
 Furthermore, NEAT evaluates the fitness of each genome within the context of its species, a process termed "adjusted fitness."
 This relative evaluation ensures that a single, highly fit species does not dominate the entire population, thereby maintaining
 a healthy diversity of solutions and preventing stagnation in local minima. Adjusted fitness encourages the exploration
-of various niches in the solution space, fostering the development of novel and potentially superior neural network architectures.
+of various niches in the solution space, enabling the development of novel and potentially superior neural network architectures.
 \section{Methodology}
     \subsection{Problems used to test the implementation}
         \subsubsection{XOR}
@@ -98,7 +98,7 @@ of various niches in the solution space, fostering the development of novel and 
         having separate methods for mutations of nodes, connections, and weights. Genome's config is a shared object between all genomes, and it is 
         given to it by a Population object during its initialization. Population is a class that controls the whole algorithm. It is responsible for
         maintaining a list of genomes, list of species, and maintaining a coherent state between all the mutations of genomes and changes in specie set.
-        It is also responsible for the toplevel loop, that runs the algorithm for a given number of generations. The single loop looks like this:
+        It is also responsible for the toplevel loop, that runs the algorithm for a given number of generations. The single iteration of that loop looks like this:
         \begin{enumerate}
             \item Divide the population into Species
             \item Calculate fitness of each individual genome
@@ -212,7 +212,7 @@ of various niches in the solution space, fostering the development of novel and 
     connections, with respective standard deviations being 0.31 and 0.66.
 
 \end{itemize}
-\section{Conclusions}
+\section{Discussion}
 From our results, there can be many conclusions. The problems do not constitute a linear progression of 
 difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
 as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
