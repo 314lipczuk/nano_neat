@@ -134,13 +134,53 @@ giving novel but initially less fit networks the opportunity to evolve and impro
 \subsection{Crossover}
 Crossover is a process of combining two genomes into a new one. It is a key part of NEAT, as it is the main way of combining successful traits from different
 genomes. It first aligns the genomes by their innovation numbers. Then, each gene is categorized as either disjoint, excess or matching.
+Disjoint genes are genes that are present in only one of the genomes, and excess genes are genes that are present in both genomes, but the innovation number of
+the gene is higher than the highest innovation number in the other genome. Matching genes are genes that are present in both genomes
 The way of combining the genes depends on their category, and configuration parameters passed to the algorithm. The most basic way of combining genes
-is 
-For disjoint and excess genes, the algorithm chooses randomly from which parent to inherit the gene. For matching genes, the algorithm chooses randomly
- and then for each gene chooses randomly one of the two genomes to inherit the gene from.
-
-
+is taking the disjoint and excess genes from the fitter parent, or in the case where both parents have the same fitness, taking the gene from a random parent.
+In case of matching genes, depending on the configuration parameter the algorithm either takes the gene from a random parent, or takes the average of the weights 
+of the matching genes.
+A common pattern in NEAT is to mutate the offspring after crossover. This process is described in the next section.
 \subsection{Mutation}
+Mutation in NEAT can be divided into two main categories: structural and non-structural.
+Structural mutations are mutations that change the topology of the network, which is done by adding a new node or a new connection. The process of growing
+the structure is often referred as 'exploration', as the algorithm is exploring the wider solution space of topologies for a given problem.
+\subsubsection{Adding a node}
+Process of adding a connection to a genome is as follows:
+This involves selecting an existing connection randomly within the network.
+The chosen connection is then split into two by inserting a new node in the middle.
+The original connection is disabled and two new connections are created: one from the starting point of the original connection to the new node,
+and another from the new node to the original connection's endpoint. The weight of the first new connection is usually set to 1,
+to maintain the overall impact of the input on the network, while the weight of the second new connection retains the original connection's weight.
+This ensures that the new node initially represents the same function as the original connection. Additionally, each of these new connections,
+as well as the new node, are assigned unique innovation numbers, which help track these structural changes across generations. 
+\subsubsection{Adding a connection}
+First, the algorithm chooses a random two non-connected nodes in the genome. Then, depending on the configuration parameters, the conditions for valid connection
+are checked (For example, if recurrent connections are disabled, the algorithm checks if the connection is not going from further to earlier layer). 
+If the connection is valid, it is initialized and added to the genome. During the initialization, the connection is assigned a random weight, and its innovation
+number.
+\subsubsection{Weight mutation}
+Weight mutation is a mutation that changes the weights of the connections in the genome. It is a form of non-structural mutation, and as such can be considered
+to be part of the 'exploitation' phase of the algorithm. It is done by iterating over all the connections in the genome, and with a given probability changing
+the value in by either 'perturbation' or 'resetting'. These terms represent two different ways of changing the value of the weight.
+'Perturbation' means changing the value of the weight by a small amount, commonly a percentage of current value. 'Resetting', conversely, means setting
+the value to a completely new random value. It is worth noting, that usually both of the methods are used at once, with a given probability for triggering
+each of them. This probability is determined by a configuration parameter. 
+
+\subsubsection{Other non-structural mutations}
+There are other non-structural mutations that are a part of the NEAT algorithm. They are not as important as the weight mutation, but they are still worth
+talking about, because they can aid in the understanding of the real inner workings of the algorithm.
+First of them is the reactivation of disabled connections. This mutation is done by iterating over all the disabled connections in the genome, and with a given
+probability reactivating them. The probability for reactivation is determined by a configuration parameter.
+Another mutation is a quirk of the implementation of strucure of NEAT's genome. Most of implementations rely on a list of connections, and a list of nodes as a 
+ground truth for the structure of the genome. With this information we could form a graph showing how our network looks like. However, when it comes to 
+computing a forward pass on the network created from the genome, we would like to have the structure divided into layers for computing convenience.
+Adding layers into the structure is a trivial task, and has to be calculated only once per genome per generation (and only if the structure has actually 
+changed in that generation). However, doing so can lead to a situation where a connectoin that was previously valid, is now invalid, because it
+is going from a later layer to an earlier layer. This is a problem especially when the parameters of a problem forbid recurrent connections. To sum up, 
+recalculating layers of a network does not change the structure of the genome, but can change how the structure is perceived during evaluation, and thus
+can invalidate some connections.
+
 \section{Methodology}
     \subsection{Problems used to test the implementation}
         \subsubsection{XOR}
