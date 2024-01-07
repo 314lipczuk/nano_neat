@@ -104,23 +104,23 @@ that in case of population dying out the algorithm can start from scratch with a
 \subsection{Speciation}
 Speciation mechanism is a key part of NEAT.
 It is responsible for maintaining diversity in the population, and preventing premature convergence to local optima.
-The idea is inspired by the biological process where species evolve differently based on their distinct environments
+The idea is inspired by the biological process where species evolve differently based on their distinct environments.
 Speciation works by dividing the population into species based on their strucural and weight similarity.
 This is done by a compatibility distance metric that measures the genetic difference between two networks, 
-considering factors such as excess and disjoint genes, and weight differences chosen representative of each species. 
+considering factors such as excess and disjoint genes, and weight differences between evaluated genome and a chosen representative of each species. 
 The comparison is done by a function
-$$C_1*E + C_2*D + C_3*W$$
+$$ \frac{C_1*E}  {N} + \frac{C_2*D} {N} + C_3*W \leq T$$
 where $E$ is the number of excess genes, $D$ is the number of disjoint genes, $W$ is the average weight difference between matching genes, 
-and $C_1$, $C_2$ and $C_3$ are parameters that control the importance of each of these factors. 
+$C_1$, $C_2$ and $C_3$ are parameters that control the importance of each of these factors. Finally, $T$ is the threshold value for the compatibility distance.
+Whenever the comparison returns true, the genomes are considered to be in the same species. 
 
 By placing similar genomes into the same species, NEAT ensures that innovative structures are not prematurely discarded due to competition with more fit,
 but possibly less innovative, networks.
 This mechanism allows newly evolved structures, which might initially be less competitive, to optimize and mature within their niche.
-One other aspect of speciation is the concept of target specie size which affects the threshold value for the compatibility distance metric that determines
-if a distance between two genomes is small enough to be considered the same species. This threshold is then set as dynamic,
-and is changed based on the current number of species in the population and the desired number of species in the population.
 
-
+One other aspect of speciation is the concept of target specie size which affects the threshold value for the compatibility distance.
+This threshold can be set as dynamic, and is then changed based on the current number of species in the population and
+the desired number of species in the population.
 
 \subsection{Shared fitness}
 Shared fitness is a concept that is used in NEAT as an alternative metric to a raw fitness of a genome.  
@@ -129,10 +129,17 @@ This is achieved by dividing an individual's fitness score by the size of its sp
 This approach ensures that a species dominating the population doesn't unfairly monopolize the breeding opportunities simply because it has more members.
 By doing so, shared fitness encourages the preservation and exploration of innovative and potentially beneficial traits that might arise in smaller,
 less competitive species. This mechanism effectively balances the evolutionary process,
-giving novel but initially less fit networks the opportunity to evolve and improve over generations
-
+giving novel but initially less fit networks the opportunity to evolve and improve over generations.
 
 \subsection{Crossover}
+Crossover is a process of combining two genomes into a new one. It is a key part of NEAT, as it is the main way of combining successful traits from different
+genomes. It first aligns the genomes by their innovation numbers. Then, each gene is categorized as either disjoint, excess or matching.
+The way of combining the genes depends on their category, and configuration parameters passed to the algorithm. The most basic way of combining genes
+is 
+For disjoint and excess genes, the algorithm chooses randomly from which parent to inherit the gene. For matching genes, the algorithm chooses randomly
+ and then for each gene chooses randomly one of the two genomes to inherit the gene from.
+
+
 \subsection{Mutation}
 \section{Methodology}
     \subsection{Problems used to test the implementation}
