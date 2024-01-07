@@ -33,11 +33,27 @@ The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalW
 
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
-\section {The NEAT algorithm}
+\section {NeuroEvolution of Augmenting Topologies}
 The NEAT algorithm, standing for NeuroEvolution of Augmenting Topologies, was first introduced in 2002 by Kenneth O. Stanley
 and Risto Miikkulainen in their paper \cite{originalNeat}. This work not only proposed a novel approach to evolving neural
 networks but also addressed some of the challenges faced by previous methods such as TWEANNs (Topology and Weight-Evolving
 Artificial Neural Networks).
+\subsection{History}
+
+The NEAT algorithm was first introduced in 2002 by Kenneth O. Stanley and Risto Miikkulainen in their paper \cite{originalNeat}. 
+During that time both the ideas of evolving neural networks, and doing it in a way that allows for structural changes were not new.
+Notably, the TWEANNs (Topology and Weight Evolving Artificial Neural Network) algorithms were the first to propose this idea.
+However, the TWEANN algorithms had a couple of problems. 
+First one of them was the problem of competing conventions. This problem arises when two different genomes encode the same
+functional structure in different ways. This causes the algorithm to treat them as different structures, and therefore hinders
+their ability to combine their successful traits. Another problem was the lack of convention regarding the starting structure
+of the network. This meant relying on randomized start, which could lead to suboptimal solutions. Lastly, the TWEANN algorithms
+did not have a mechanism to maintain diversity in the population, which could lead to premature convergence to local optima - 
+a problem that is common in evolutionary algorithms. Any kind of uptick in fitness of a certain genome would lead to it dominating
+the population, and therefore preventing the algorithm from exploring other solutions.  
+
+\subsection{Key ideas}
+The NeuroEvolution of Augmenting Topologies (NEAT) algorithm adresses the problems of TWEANNs by introducing a couple of key ideas.
 At the heart of NEAT is the principle of starting with the simplest possible network structure for each problem. Unlike previous
 approaches that began with random and potentially complex structures, NEAT initializes with a basic network where the input
 layer is fully connected to the output layer, devoid of any hidden nodes. This minimalistic starting point allows the algorithm
@@ -56,6 +72,68 @@ Furthermore, NEAT evaluates the fitness of each genome within the context of its
 This relative evaluation ensures that a single, highly fit species does not dominate the entire population, thereby maintaining
 a healthy diversity of solutions and preventing stagnation in local minima. Adjusted fitness encourages the exploration
 of various niches in the solution space, enabling the development of novel and potentially superior neural network architectures.
+\subsection{Encoding and Innovation}
+
+Encoding in NEAT refers to how the structure and information of a neural network are represented.
+NEAT uses a genetic encoding that describes both the topology of the network and the connection weights in such a way, that information about
+where a gene came from is preserved. This is done by assigning a unique global innovation number to each new connection in the population.
+That way, when two genomes have identical connections, they can be aligned and grouped by comparing their innovation numbers. This allows us 
+to easily compute how much in total do two genomes differ from each other by comparing the number of disjoint and excess genes, as well as the 
+difference in weights of matching genes. This method of differentiating genomes has been proven to be effective and practical, as it only relies
+on the innovation information stored in the genomes themselves, while other methods for achieving the same goal often require
+doing expensive computations on the networks (essentialy trying to do graph matching, which is a NP-complete problem - not really suitable chocice
+for a computation that has to be done $N*M*S$ times every run, where $N$ is the number of generations, $M$ is the number of genomes in a population
+and $S$ is the amount of species).
+Encoding also helps to prevent the competing conventions problem. This problem arises when two different genomes encode the same
+functional structure in different ways. This causes the algorithm to treat them as different structures, and therefore is bound to produce a 
+damaged offspring when they are crossed over. This problem is solved by the innovation numbers, as they allow us to align the genomes and
+permitting crossover to be performed only on similar structures.
+problem. 
+
+\subsection{Minimal starting structure}
+Another key idea of NEAT is the minimal starting structure. Unlike previous approaches that began with random and potentially complex structures, 
+this approach initializes with a basic network where the input layer of given size is fully connected to the output layer, devoid of any hidden nodes.
+This minimalistic starting point allows the algorithm to incrementally and efficiently discover the necessary complexity, avoiding the pitfalls of starting
+with an overly complicated or suboptimal structure. It also helps to define the meta behavior of the algorithm - starting from a random structure, it is
+possible that the correct answer is reducing complexity (which is not actually possible, it happens by watering down the unused weights, which just makes
+part of the network effectively useless). Random start, therefore, makes it harder for the algorithm to define correct behavior for advancing the structure.
+NEAT on the other hand, by starting with a minimal structure is forced to grow the structure to match problem complexity. This may seem like not a big
+change, but in terms of behavior of the algorithm, it means that the only choice the algorithm can make is to change weights and add structure. This also means,
+that in case of population dying out the algorithm can start from scratch with a minimal structure, and it will be forced to grow the structure again. 
+
+\subsection{Speciation}
+Speciation mechanism is a key part of NEAT.
+It is responsible for maintaining diversity in the population, and preventing premature convergence to local optima.
+The idea is inspired by the biological process where species evolve differently based on their distinct environments
+Speciation works by dividing the population into species based on their strucural and weight similarity.
+This is done by a compatibility distance metric that measures the genetic difference between two networks, 
+considering factors such as excess and disjoint genes, and weight differences chosen representative of each species. 
+The comparison is done by a function
+$$C_1*E + C_2*D + C_3*W$$
+where $E$ is the number of excess genes, $D$ is the number of disjoint genes, $W$ is the average weight difference between matching genes, 
+and $C_1$, $C_2$ and $C_3$ are parameters that control the importance of each of these factors. 
+
+By placing similar genomes into the same species, NEAT ensures that innovative structures are not prematurely discarded due to competition with more fit,
+but possibly less innovative, networks.
+This mechanism allows newly evolved structures, which might initially be less competitive, to optimize and mature within their niche.
+One other aspect of speciation is the concept of target specie size which affects the threshold value for the compatibility distance metric that determines
+if a distance between two genomes is small enough to be considered the same species. This threshold is then set as dynamic,
+and is changed based on the current number of species in the population and the desired number of species in the population.
+
+
+
+\subsection{Shared fitness}
+Shared fitness is a concept that is used in NEAT as an alternative metric to a raw fitness of a genome.  
+The key idea behind shared fitness is to evaluate the fitness of an individual not solely on its own performance but in the context of its species.
+This is achieved by dividing an individual's fitness score by the size of its species.
+This approach ensures that a species dominating the population doesn't unfairly monopolize the breeding opportunities simply because it has more members.
+By doing so, shared fitness encourages the preservation and exploration of innovative and potentially beneficial traits that might arise in smaller,
+less competitive species. This mechanism effectively balances the evolutionary process,
+giving novel but initially less fit networks the opportunity to evolve and improve over generations
+
+
+\subsection{Crossover}
+\subsection{Mutation}
 \section{Methodology}
     \subsection{Problems used to test the implementation}
         \subsubsection{XOR}
@@ -297,6 +375,5 @@ of exploring its current topology.
         is not a stated priority, it there are some ways to improve it without sacrificing much of the simplicity.
         The evaluation of the genomes is currently done in a single thread, which is a bottleneck for the whole process.
         It would be good to implement a multithreaded evaluation, which would speed up the process significantly.
-\section{Bibliography}
 \bibliography{references}
 \end{document}
