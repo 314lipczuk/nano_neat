@@ -33,45 +33,61 @@ The implementation was tested on 4 problems: XOR, Cartpole, Acrobot and BipedalW
 
 \subsection{Keywords}
 Neuroevolution, NEAT, Evolutionary Algorithms, Machine Learning, Artificial Intelligence, Didactic Implementation
+\newpage
 \section {NeuroEvolution of Augmenting Topologies}
 The NEAT algorithm, standing for NeuroEvolution of Augmenting Topologies, was first introduced in 2002 by Kenneth O. Stanley
 and Risto Miikkulainen in their paper \cite{originalNeat}. This work not only proposed a novel approach to evolving neural
 networks but also addressed some of the challenges faced by previous methods such as TWEANNs (Topology and Weight-Evolving
 Artificial Neural Networks).
 \subsection{History}
-
 The NEAT algorithm was first introduced in 2002 by Kenneth O. Stanley and Risto Miikkulainen in their paper \cite{originalNeat}. 
 During that time both the ideas of evolving neural networks, and doing it in a way that allows for structural changes were not new.
 Notably, the TWEANNs (Topology and Weight Evolving Artificial Neural Network) algorithms were the first to propose this idea.
 However, the TWEANN algorithms had a couple of problems. 
-First one of them was the problem of competing conventions. This problem arises when two different genomes encode the same
+
+First one of them was the problem of competing conventions. It arises when two different genomes encode the same
 functional structure in different ways. This causes the algorithm to treat them as different structures, and therefore hinders
-their ability to combine their successful traits. Another problem was the lack of convention regarding the starting structure
-of the network. This meant relying on randomized start, which could lead to suboptimal solutions. Lastly, the TWEANN algorithms
-did not have a mechanism to maintain diversity in the population, which could lead to premature convergence to local optima - 
-a problem that is common in evolutionary algorithms. Any kind of uptick in fitness of a certain genome would lead to it dominating
-the population, and therefore preventing the algorithm from exploring other solutions.  
+their ability to combine their successful traits.
+Another problem was the idea of starting with a random structure of the network.
+This meant relying on luck, which could lead to situations where initial random structure was far from any viable solution,
+just because of the sheer amount of possible structures (especially in problems with big input and output layers).
+
+Creating non-minimal starting structure could also lead to problems, as it could lead to the algorithm not being able to reduce complexity.
+In the case of simple neuroevolutionary algorithms, a lot of the time algorithm doesn't have an explicit operation for removing nodes and
+connections. That means that the only way to reduce complexity is to water down the weights of the connections, which can lead to a situation
+analogous to vanishing gradient problem - network is big but most of the connections are effectively useless, and changes to them have 
+almost no effect on the output of the network. 
+
+Lastly, the TWEANN algorithms did not have a mechanism to maintain diversity in the population,
+which could lead to premature convergence to local optima -  a problem that is common in evolutionary algorithms.
+Any kind of uptick in fitness of a certain genome would lead to it dominating the population, and therefore preventing the algorithm from exploring other solutions.  
 
 \subsection{Key ideas}
 The NeuroEvolution of Augmenting Topologies (NEAT) algorithm adresses the problems of TWEANNs by introducing a couple of key ideas.
 At the heart of NEAT is the principle of starting with the simplest possible network structure for each problem. Unlike previous
 approaches that began with random and potentially complex structures, NEAT initializes with a basic network where the input
 layer is fully connected to the output layer, devoid of any hidden nodes. This minimalistic starting point allows the algorithm
-to incrementally and efficiently discover the necessary complexity, avoiding the pitfalls of starting with an overly complicated or suboptimal structure.
+to incrementally and efficiently discover the necessary complexity, avoiding the pitfalls of starting with an overly complicated 
+or suboptimal structure.
+
 One of the main features of NEAT is the use of innovation numbers. This concept arose from the observation that systems
 capable of evolving both topology and weights often represent similar solutions through vastly different structures and encodings.
 This diversity, while beneficial for exploration, can hinder the effective combination of successful traits from different genomes.
 To address this, NEAT assigns a unique global innovation number to each new connection in the population. This numbering system helps 
-in identifying when two genomes independently evolve identical connections, thus facilitating more effective crossover by aligning similar structures.
+in identifying when two genomes independently evolve identical connections, thus facilitating more effective crossover by
+aligning similar structures. 
+
 Another critical aspect of NEAT is the concept of speciation. This mechanism ensures diversity within the population and prevents
 premature convergence to local optima. In NEAT, the population is divided into species based on structural and weight differences
 from a randomly chosen representative of each species. These species essentially represent subgroups of genomes exploring similar 
 solutions, allowing NEAT to maintain a rich variety of strategies within the population. Speciation plays a crucial role in preserving
 innovative structures that might otherwise be lost in a homogeneous population.
+
 Furthermore, NEAT evaluates the fitness of each genome within the context of its species, a process termed "adjusted fitness."
 This relative evaluation ensures that a single, highly fit species does not dominate the entire population, thereby maintaining
 a healthy diversity of solutions and preventing stagnation in local minima. Adjusted fitness encourages the exploration
 of various niches in the solution space, enabling the development of novel and potentially superior neural network architectures.
+
 \subsection{Encoding and Innovation}
 
 Encoding in NEAT refers to how the structure and information of a neural network are represented.
@@ -159,6 +175,7 @@ First, the algorithm chooses a random two non-connected nodes in the genome. The
 are checked (For example, if recurrent connections are disabled, the algorithm checks if the connection is not going from further to earlier layer). 
 If the connection is valid, it is initialized and added to the genome. During the initialization, the connection is assigned a random weight, and its innovation
 number.
+This process of adding connections increases the network's potential interactions, allowing for more complex behaviors.
 \subsubsection{Weight mutation}
 Weight mutation is a mutation that changes the weights of the connections in the genome. It is a form of non-structural mutation, and as such can be considered
 to be part of the 'exploitation' phase of the algorithm. It is done by iterating over all the connections in the genome, and with a given probability changing
@@ -166,6 +183,16 @@ the value in by either 'perturbation' or 'resetting'. These terms represent two 
 'Perturbation' means changing the value of the weight by a small amount, commonly a percentage of current value. 'Resetting', conversely, means setting
 the value to a completely new random value. It is worth noting, that usually both of the methods are used at once, with a given probability for triggering
 each of them. This probability is determined by a configuration parameter. 
+Moreover, the probabilities assigned to perturbation and resetting are not just configuration details;
+they embody the strategic balance between exploration and exploitation. A higher probability of perturbation may lead to overfitting in certain scenarios,
+where the network becomes too finely tuned to the training data, losing its generalization ability.
+Conversely, excessive resetting might disrupt the evolutionary process, leading to a loss of learned characteristics.
+
+The evolution of these weight mutation strategies can also be adaptive, adjusting in response to the network's performance. For instance,
+if a network's progression stalls, increasing the probability of resetting might provide the necessary diversity to overcome barriers.
+Alternatively, if a network is steadily improving, a greater focus on perturbation might accelerate convergence towards an optimal solution.
+This is resembling to a concept of 'temperature' of a neural network, where the temperature is a parameter that controls the amount of 
+noise, randomness and variability in the network.
 
 \subsubsection{Other non-structural mutations}
 There are other non-structural mutations that are a part of the NEAT algorithm. They are not as important as the weight mutation, but they are still worth
@@ -180,6 +207,9 @@ changed in that generation). However, doing so can lead to a situation where a c
 is going from a later layer to an earlier layer. This is a problem especially when the parameters of a problem forbid recurrent connections. To sum up, 
 recalculating layers of a network does not change the structure of the genome, but can change how the structure is perceived during evaluation, and thus
 can invalidate some connections.
+\subsection{The overall behavior}
+TODO: describe the overall behavior of the actual iteration of 1 generation algorithm
+TODO: describe math of calculating offspring
 
 \section{Methodology}
     \subsection{Problems used to test the implementation}
