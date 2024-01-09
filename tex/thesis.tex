@@ -138,14 +138,29 @@ One other aspect of speciation is the concept of target specie size which affect
 This threshold can be set as dynamic, and is then changed based on the current number of species in the population and
 the desired number of species in the population.
 
-\subsection{Shared fitness}
-Shared fitness is a concept that is used in NEAT as an alternative metric to a raw fitness of a genome.  
+\subsection{Shared fitness and adjusted fitness}
+Shared fitness is a concept \cite{Grefenstette_2013} that is used in NEAT as an alternative metric to a raw fitness of a genome.
 The key idea behind shared fitness is to evaluate the fitness of an individual not solely on its own performance but in the context of its species.
-This is achieved by dividing an individual's fitness score by the size of its species.
+It is computed by dividing the raw fitness of an organism by the size of its species.
+The result of this computation is called adjusted fitness of an organism. It is stored separately from the raw fitness, and is used for mating pool selection.
 This approach ensures that a species dominating the population doesn't unfairly monopolize the breeding opportunities simply because it has more members.
 By doing so, shared fitness encourages the preservation and exploration of innovative and potentially beneficial traits that might arise in smaller,
 less competitive species. This mechanism effectively balances the evolutionary process,
 giving novel but initially less fit networks the opportunity to evolve and improve over generations.
+
+\subsection{Offspring calculation}
+The amount of offspring is calculated on a specie basis. The precise function differs between implementations, with the constant factor being that
+the offspring count is proportional to the sum of adjusted fitness of the specie. One of the most common functions is the following: 
+$$offspring(specie) = \frac{sum\_adjusted\_fitness(specie)}{total\_adjusted\_fitness\_average} * size\_of\_population$$
+After calculating the offspring count for each specie, algorithm considers its config. If the elitism is enabled, the best genomes are
+passed to the next generation. Then, the algorithm selects the genomes that are allowed to be used in crossover. This can be also understood as
+eliminating the lowest performing genomes from the mating pool. The entire new generation then is replaced by the offspring of the genomes in the mating pool.
+There are further configuration options that affect selection and probabilities of choosing certaion genomes for crossover, and the most importatn
+ones are as follows:
+the algorithm selects the best genomes from each specie to be passed to the next generation.
+The centile of genomes to be used in crossover can be configured by the user. Furthermore, while selection process is done on a specie basis, it can
+be configured to allow genomes to pick partners from other species. This is done by assigning a probability to each genome to be able to pick a partner.
+From the whole population, but modifying the chance for out-of-specie reproduction by a given factor. This factor is also a configuration parameter.
 
 \subsection{Crossover}
 Crossover is a process of combining two genomes into a new one. It is a key part of NEAT, as it is the main way of combining successful traits from different
@@ -208,8 +223,18 @@ is going from a later layer to an earlier layer. This is a problem especially wh
 recalculating layers of a network does not change the structure of the genome, but can change how the structure is perceived during evaluation, and thus
 can invalidate some connections.
 \subsection{The overall behavior}
-TODO: describe the overall behavior of the actual iteration of 1 generation algorithm
-TODO: describe math of calculating offspring
+The behavior of the algorithm is as follows: 
+At start, the algorithm initializes a population of genomes with minimal structure. Depending on the configuration parameters,
+the genome population can be initialized with random weights each, same random weights for all, or with all weights set to a given value.
+Then, the generation loop starts. During each generation, the algorithm does the following:
+    \begin{enumerate}
+        \item Divide the population into Species (Speciation)
+        \item Calculate fitness of each individual genome
+        \item Check for exit condition and exit if met
+        \item Calculate adjusted fitness of each individual genome
+        \item Calculate offspring count for each specie
+        \item Create new generation by crossover and mutation of selected genomes and species
+    \end{enumerate}
 
 \section{Methodology}
     \subsection{Problems used to test the implementation}
@@ -452,5 +477,15 @@ of exploring its current topology.
         is not a stated priority, it there are some ways to improve it without sacrificing much of the simplicity.
         The evaluation of the genomes is currently done in a single thread, which is a bottleneck for the whole process.
         It would be good to implement a multithreaded evaluation, which would speed up the process significantly.
+\section{TODO \& Notes}
+\begin{itemize}
+    \item Opisać problem napotkany przy uzyciu negatywnego fitnessu, tak jak w https://www.cs.ucf.edu/~kstanley/neat.html , quote:
+"Is there a way to use negative fitnesses in NEAT?
+You may have noticed that if you try to use negative fitnesses, NEAT breaks down because of fitness sharing, which requires positive fitness values.
+Real Carbonneau suggested the following solution to this problem: Compute fitness as you wish, with negative values if desired. Then, adjust all the fitnesses by replacing them with the distance between the actual fitness and the lowest fitness in the population. This will scale all the fitnesses above zero, keeping the relationships stable. "
+\item describe math of calculating offspring
+\item shared vs adjusted fitness
+\item cytowania; pomysły: rzeczy z orginalnego papera o TWEANN i metodach, strona autora https://www.cs.ucf.edu/~kstanley/neat.html, strona hyperNeata (do omówienia extensions)
+\end{itemize}
 \bibliography{references}
 \end{document}
