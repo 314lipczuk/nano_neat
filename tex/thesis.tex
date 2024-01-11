@@ -14,7 +14,7 @@
  \useunder{\uline}{\ul}{}
  \usepackage{float}
 
-\title{NanoNeat}
+\title{NanoNeat - a tiny implementation of NeuroEvolution of Augmenting Topologies algorithm with focus on simplicity}
 \author{Przemysław Pilipczuk}
 \date{December 2023}
 
@@ -274,7 +274,7 @@ is going from a later layer to an earlier layer. This is a problem especially wh
 recalculating layers of a network does not change the structure of the genome, but can change how the structure is perceived during evaluation, and thus
 can invalidate some connections.
 
-\subsection{The overall behavior}
+\subsection{The toplevel behavior}
 The behavior of the algorithm is as follows: 
 At start, the algorithm initializes a population of genomes with minimal structure. Depending on the configuration parameters,
 the genome population can be initialized with random weights each, same random weights for all, or with all weights set to a given value.
@@ -288,9 +288,43 @@ Then, the generation loop starts. During each generation, the algorithm does the
         \item Create new generation by crossover and mutation of selected genomes and species
     \end{enumerate}
 
-\section{Methodology}
-    \subsection{Problems used to test the implementation}
-        \subsubsection{XOR}
+    \section{Problems used to test the implementation}
+    When selecting problems to test an implementation, a strategic approach is essential.
+    The primary objective is to choose problems that effectively challenge and evaluate the algorithm's capability to evolve and optimize neural networks.
+    The chosen problems should represent a range of complexities and types, enabling a comprehensive assessment of the NEAT
+    algorithm's performance and adaptability.
+
+    For this implementation, the selected test problems were: XOR, Cartpole, Acrobot, and BipedalWalker.
+    The XOR problem, a classic benchmark in neural network research, serves as an initial
+    test to assess the algorithm's basic functionality in solving simple, non-linear problems. It can also be thought
+    of as a sanity check during development and debugging, as it enables quick iteration and evaluation of the algorithm.
+    Cartpole, a classic problem in reinforcement learning, challenges the algorithm with a dynamic environment requiring balance and control.
+    Acrobot, another dynamic system, introduces a more complex task with a two-link pendulum where the goal is to swing up and balance.
+    Finally, BipedalWalker, a simulation of a two-legged robot, presents a sophisticated challenge that requires the algorithm to evolve a 
+    neural network capable of managing a multitude of sensors and actuators to achieve stable, bipedal locomotion.
+    This diverse selection of problems ensures a rigorous evaluation of NEAT across various scenarios,
+    highlighting its strengths and identifying areas for improvement.
+
+    \subsection{Why control problems?}
+    Out of the four problems three can be categorized as control problems, so it might be beneficial to explain why is this type of problem in general
+    suitable for testing such an algorithm. 
+
+    Control theory problems provide diverse challenges, ranging from simple linear systems to highly
+    complex non-linear systems.
+
+    They are a class of problems that require an agent to control a system in order to achieve
+    a certain goal within it.
+    That means facing problems that are often dynamic and require the agent to learn a complex behavior. 
+    Dynamic environments are those where the system's state changes over time, and the agent must be able to adapt to these changes.
+    That is where the evolutionary algorithms shine, as they are inherently adaptive and can be well-suited for problems in such environments.
+    Control theory problems are also very practical, because they almost directly map into real-world problems in domains such as robotics,
+    aerospace, and process control. In the these scenarios, the additional difficulty is often added by the fact
+    that the sensors are noisy, and the control system needs to be able to deal with that. 
+    Benchmarking evolutionary algorithms on such problems helps ensure that our implementation
+    is tested in scenarios that have real-world relevance.
+    
+
+        \subsection{XOR}
         Xor problem is a simple problem used mostly to test if the algorithm can start generating structure. 
         This is because XOR function is non linearly separable - it cannot be solved by the simple topology that neat starts with.
         To solve it, the algorithm needs to evolve a hidden layer. 
@@ -300,7 +334,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         as bias, connected straight to the output). Both of these conditions are tested in this work.
         XOR problem is the ideal problem to test the various effects of the algorithm's configuration, as it is simple enough to be
         evaluated quickly even on home computers, and even running it for a thousand times is not a problem.
-        \subsubsection{Cartpole}
+        \subsection{Cartpole}
         Cartpole is a problem taken from Farama Foundation's Gymnasium library \cite{gymnasium}. It is a classic control problem, 
         where an agent tries to balance a pole on a cart. The agent's observation space consists of cart's 
         position, velocity, angle of the pole and its angular velocity. The agent can move the cart left or right.
@@ -308,21 +342,21 @@ Then, the generation loop starts. During each generation, the algorithm does the
         to the xor problem, its model is subjected to multiple sequential runs,
         with its fitness being judged based on its cumulative performance across these runs. This means, that
         recurrent connections can potentially be used.
-        \subsubsection{Acrobot}
+        \subsection{Acrobot}
         Acrobot is a similar problem to the cartpole, with a slightly bigger state space. The problem consists
         of a two-link system, one of its ends fixed to a certain position. All of the joints are allowed to rotate,
         abd the agent is given control over an actuated joint between the two links. Its goal is to swing the
         end of the free link over given height (while starting from a hanging position). 
         THis problem also is evaluated as a single evaluation session, being subjected to multiple sequential runs,
         with its fitness being judged based on its cumulative performance across these runs.
-        \subsubsection{BipedalWalker}
+        \subsection{BipedalWalker}
         BipedalWalker is the hardest problem used in this work. It is a problem taken from Farama Foundation's
         Gymnasium library \cite{gymnasium}. The agent tries to control a bipedal robot and make it walk to the end of the map, while
         making its movements energy-efficient. The observation space is significantly bigger than in previous problems,
         consisting of 24 values. The action space somewhat similar, but due to the problem specifics, requiring a 
         much more precise control. 
-    \subsection{Implementation details}
-        \subsubsection{Technology choices}
+    \section{Implementation details}
+        \subsection{Technology choices}
         The implementation is written in Python 3.11.5, and the dependencies needed for the core to work are:
         \begin{itemize}
             \item dill - used for serializing and deserializing particular genomes both for inspection and debugging purpouses. 
@@ -340,7 +374,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         \end{itemize}
         The choice of Python was made due to its simplicity and ability to convey the ideas of the algorithm in a concise way.
         Standard library of Python was used extensively to make sure the implementation is easy to follow.
-        \subsubsection{Core algorithm}
+        \subsection{Core algorithm}
         The core algorithm if NEAT is implemented in ~400 lines of Python in model.py
         The base for a single agent is a class called Genome. It contains a list of nodes and a list of connections for this particular 
         specimen, as well as a fitness value. Nodes and Connections have their own respectively named classes, both of which are accessing
@@ -360,7 +394,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         \end{enumerate}
         The Specie class is responsible for dealing with the speciation process and calculating relevant statistics for each (such as adjusted fitness or 
         generation without improvement count). 
-        \subsubsection{Configuration}
+        \subsection{Configuration}
         Population object is initialized with a Config object, which is a main way to configure algorithm. It is a simple object with a set of fields
         and a couple of methods. Most of the fields have default values, and are not required to be set manually by the user. The few fields that are
         mandatory are: 
@@ -410,7 +444,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         (like a name of environment in gymnasium, or an offset for calculating fitness) it is stored in the meta field. This implementation was chosen
         to make sure users cannot accidentally overwrite an iternal field of the Config object, and also to provide a clear boundary between NEAT config 
         and problem-specific config, ensuring a more generic structure.
-        \subsubsection{Problem-specific adjustments}
+        \subsection{Problem-specific adjustments}
         \begin{itemize}
             \item XOR - This problem is given a custom activation function - a steepened sigmoid function.
             This is because in this problem we don't care about exact value of the output, but rather if it is closer to 0 or 1.
@@ -462,7 +496,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
     connections, with respective standard deviations being 0.31 and 0.66.
 
 \end{itemize}
-\section{Discussion}
+\section{Conclusions}
 From our results, there can be many conclusions. The problems do not constitute a linear progression of 
 difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
 as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
@@ -531,12 +565,14 @@ of exploring its current topology.
         It would be good to implement a multithreaded evaluation, which would speed up the process significantly.
 \section{TODO \& Notes}
 \begin{itemize}
-    \item Opisać problem napotkany przy uzyciu negatywnego fitnessu, tak jak w https://www.cs.ucf.edu/~kstanley/neat.html , quote:
+    \item Opisać problem napotkany przy uzyciu negatywnego fitnessu, tak jak w https://www.cs.ucf.edu/~kstanley/neat.html , 
+    sekcja "dobieranie problemów do algorytmu"?
+    quote:
+
 "Is there a way to use negative fitnesses in NEAT?
 You may have noticed that if you try to use negative fitnesses, NEAT breaks down because of fitness sharing, which requires positive fitness values.
 Real Carbonneau suggested the following solution to this problem: Compute fitness as you wish, with negative values if desired. Then, adjust all the fitnesses by replacing them with the distance between the actual fitness and the lowest fitness in the population. This will scale all the fitnesses above zero, keeping the relationships stable. "
 \item cytowania; pomysły: rzeczy z orginalnego papera o TWEANN i metodach, strona autora https://www.cs.ucf.edu/~kstanley/neat.html, strona hyperNeata (do omówienia extensions)
-\item opisać direct i indirect encoding
 \item neuroevolution vs gradient descent
 \end{itemize}
 \bibliography{references}
