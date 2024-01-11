@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{graphicx} % Required for inserting images
 \bibliographystyle{unsrt}
+\usepackage{amsmath}
 
 % table stuff
  \usepackage[normalem]{ulem}
@@ -41,9 +42,22 @@ networks but also addressed some of the challenges faced by previous methods suc
 Artificial Neural Networks).
 \subsection{History}
 The NEAT algorithm was first introduced in 2002 by Kenneth O. Stanley and Risto Miikkulainen in their paper \cite{originalNeat}. 
-During that time both the ideas of evolving neural networks, and doing it in a way that allows for structural changes were not new.
-Notably, the TWEANNs (Topology and Weight Evolving Artificial Neural Network) algorithms were the first to propose this idea.
-However, the TWEANN algorithms had a couple of problems. 
+It came out of a branch of artificial intelligence that draws inspiration from biological evolution.
+This field, which has roots extending back to the 1950s and 1960s,
+focuses on using algorithms based on the principles of natural selection and genetics to solve complex problems.
+Early work in evolutionary computation involved genetic algorithms and genetic programming,
+where solutions to problems were encoded in simple chromosome-like data structures and evolved over time.
+
+During 1990s and earlly 2000s the ideas of evolving neural networks, and doing it in a way that allows for structural changes gained more traction. 
+Notably, the TWEANNs (Topology and Weight Evolving Artificial Neural Network) algorithms were the first realizaiton of this concept.
+They utilized neuroevolution, which is a branch of evolutionary computation that applies genetic algorithms to the training and creating of neural networks.
+
+This process is inspired by biological evolution, where both the structure and function of biological neural networks (like the brain)
+are subject to natural selection. 
+Early approaches in neural network design often relied on human designers to predefine the network architecture,
+which limited the complexity and adaptability of the networks. In contrast, TWEANNs autonomously discover both the optimal architecture and connection weights through evolutionary processes, making them more adaptable and potentially more efficient for complex tasks.
+
+However, the early TWEANN algorithms had a couple of problems. 
 
 First one of them was the problem of competing conventions. It arises when two different genomes encode the same
 functional structure in different ways. This causes the algorithm to treat them as different structures, and therefore hinders
@@ -88,7 +102,24 @@ This relative evaluation ensures that a single, highly fit species does not domi
 a healthy diversity of solutions and preventing stagnation in local minima. Adjusted fitness encourages the exploration
 of various niches in the solution space, enabling the development of novel and potentially superior neural network architectures.
 
-\subsection{Encoding and Innovation}
+\subsection{Encoding}
+In genetic algorithms, encoding refers to the representation of potential solutions to a problem within a genetic framework, often analogous to chromosomes in biological systems.
+The choice of encoding is crucial as it dictates how solutions are explored and evaluated.
+Fundamentally, there are two categories to consider: direct and indirect encoding.
+Direct encoding means that the genotype is directly translated into phenotype (such as a neural network). This is the case with a NEAT algorithm.
+These solutions are generally simpler. However, they are also more restrictive, as the genotype and phenotype must be compatible.
+Indirect encoding, on the other hand offers a more abstract and compact representation. Instead of mapping directly each component to the solution,
+it encodes a set of rules that are then used to generate the phenotype. This allows for more complex solutions, but also introduces additional 
+cost of complexity in the form of the rule set, as well as methods of decoding solutions.
+Examples that use indirect methods of encoding structures for its representation are tree-based encodings \cite{encoding}, or compositional pattern producing networks (based on rules).\cite{HyperNeat} 
+Tree-based encoding, often used in genetic programming, represents solutions as tree structures, 
+ideal for problems that can be expressed in hierarchical forms such as symbolic regression or logical expressions.
+Rule-based encoding is used for problems where solutions can be expressed as a set of rules,
+commonly found in machine learning and pattern recognition tasks. Graph-based encoding is useful for network design problems or scheduling,
+where solutions are best represented as graphs. These encoding schemes, while potentially more powerful and expressive than linear encoding,
+also bring challenges related to maintaining the validity of solutions after genetic operations and ensuring efficient exploration of the solution space.
+The effectiveness of a genetic algorithm is heavily dependent on the appropriateness of its encoding scheme to the problem at hand, as it directly affects the algorithm's ability to generate and evolve valid, high-quality solutions.
+\subsection{Innovation}
 
 Encoding in NEAT refers to how the structure and information of a neural network are represented.
 NEAT uses a genetic encoding that describes both the topology of the network and the connection weights in such a way, that information about
@@ -138,11 +169,27 @@ One other aspect of speciation is the concept of target specie size which affect
 This threshold can be set as dynamic, and is then changed based on the current number of species in the population and
 the desired number of species in the population.
 
+It is important to note that the goal of speciation is to protect topological innovation. In problems where the raw speciation is not enough,
+it is possible to add additional functionalities to make sure the desired effect is being achieved. One of such functionalities is 
+the ability to 'protect' specie from dying out at the beginning of its life. This is done either by setting a minimum amount of generations,
+or by setting a minimum amount of offspring for a specie for set amount of generations.
+
 \subsection{Shared fitness and adjusted fitness}
-Shared fitness is a concept \cite{Grefenstette_2013} that is used in NEAT as an alternative metric to a raw fitness of a genome.
+Explicit fitness sharing \cite{Grefenstette_2013} is a concept that is used in NEAT as a way to make organism share the fitness of their specie.
 The key idea behind shared fitness is to evaluate the fitness of an individual not solely on its own performance but in the context of its species.
-It is computed by dividing the raw fitness of an organism by the size of its species.
-The result of this computation is called adjusted fitness of an organism. It is stored separately from the raw fitness, and is used for mating pool selection.
+It is computed by dividing the raw fitness of an organism by the size of its species:
+$$f_i' = \frac{f_i}{\sum_{j=1}^{n}{sh(\delta(i,j))}}$$
+$\delta$ is our compatibility distance used in speciation:  $$\delta = \frac{C_1*E}  {N} + \frac{C_2*D} {N} + C_3*W$$ 
+Sharing function $sh$ is defined as:
+\[
+    sh(d)= 
+\begin{cases}
+    1,& \text{if } d \leq T
+\\
+    0,              & \text{otherwise}
+\end{cases}
+\]
+The result of this computation is called adjusted fitness of an organism. It is stored separately from the raw fitness, and is used for offspring calculation.
 This approach ensures that a species dominating the population doesn't unfairly monopolize the breeding opportunities simply because it has more members.
 By doing so, shared fitness encourages the preservation and exploration of innovative and potentially beneficial traits that might arise in smaller,
 less competitive species. This mechanism effectively balances the evolutionary process,
@@ -172,10 +219,12 @@ is taking the disjoint and excess genes from the fitter parent, or in the case w
 In case of matching genes, depending on the configuration parameter the algorithm either takes the gene from a random parent, or takes the average of the weights 
 of the matching genes.
 A common pattern in NEAT is to mutate the offspring after crossover. This process is described in the next section.
+
 \subsection{Mutation}
 Mutation in NEAT can be divided into two main categories: structural and non-structural.
 Structural mutations are mutations that change the topology of the network, which is done by adding a new node or a new connection. The process of growing
 the structure is often referred as 'exploration', as the algorithm is exploring the wider solution space of topologies for a given problem.
+
 \subsubsection{Adding a node}
 Process of adding a connection to a genome is as follows:
 This involves selecting an existing connection randomly within the network.
@@ -185,12 +234,14 @@ and another from the new node to the original connection's endpoint. The weight 
 to maintain the overall impact of the input on the network, while the weight of the second new connection retains the original connection's weight.
 This ensures that the new node initially represents the same function as the original connection. Additionally, each of these new connections,
 as well as the new node, are assigned unique innovation numbers, which help track these structural changes across generations. 
+
 \subsubsection{Adding a connection}
 First, the algorithm chooses a random two non-connected nodes in the genome. Then, depending on the configuration parameters, the conditions for valid connection
 are checked (For example, if recurrent connections are disabled, the algorithm checks if the connection is not going from further to earlier layer). 
 If the connection is valid, it is initialized and added to the genome. During the initialization, the connection is assigned a random weight, and its innovation
 number.
 This process of adding connections increases the network's potential interactions, allowing for more complex behaviors.
+
 \subsubsection{Weight mutation}
 Weight mutation is a mutation that changes the weights of the connections in the genome. It is a form of non-structural mutation, and as such can be considered
 to be part of the 'exploitation' phase of the algorithm. It is done by iterating over all the connections in the genome, and with a given probability changing
@@ -222,6 +273,7 @@ changed in that generation). However, doing so can lead to a situation where a c
 is going from a later layer to an earlier layer. This is a problem especially when the parameters of a problem forbid recurrent connections. To sum up, 
 recalculating layers of a network does not change the structure of the genome, but can change how the structure is perceived during evaluation, and thus
 can invalidate some connections.
+
 \subsection{The overall behavior}
 The behavior of the algorithm is as follows: 
 At start, the algorithm initializes a population of genomes with minimal structure. Depending on the configuration parameters,
@@ -483,9 +535,9 @@ of exploring its current topology.
 "Is there a way to use negative fitnesses in NEAT?
 You may have noticed that if you try to use negative fitnesses, NEAT breaks down because of fitness sharing, which requires positive fitness values.
 Real Carbonneau suggested the following solution to this problem: Compute fitness as you wish, with negative values if desired. Then, adjust all the fitnesses by replacing them with the distance between the actual fitness and the lowest fitness in the population. This will scale all the fitnesses above zero, keeping the relationships stable. "
-\item describe math of calculating offspring
-\item shared vs adjusted fitness
 \item cytowania; pomysły: rzeczy z orginalnego papera o TWEANN i metodach, strona autora https://www.cs.ucf.edu/~kstanley/neat.html, strona hyperNeata (do omówienia extensions)
+\item opisać direct i indirect encoding
+\item neuroevolution vs gradient descent
 \end{itemize}
 \bibliography{references}
 \end{document}
