@@ -2,6 +2,7 @@
 \usepackage{graphicx} % Required for inserting images
 \bibliographystyle{unsrt}
 \usepackage{amsmath}
+\usepackage{diagbox}
 
 % table stuff
  \usepackage[normalem]{ulem}
@@ -56,9 +57,7 @@ This process is inspired by biological evolution, where both the structure and f
 are subject to natural selection. 
 Early approaches in neural network design often relied on human designers to predefine the network architecture,
 which limited the complexity and adaptability of the networks. In contrast, TWEANNs autonomously discover both the optimal architecture and connection weights through evolutionary processes, making them more adaptable and potentially more efficient for complex tasks.
-
-However, the early TWEANN algorithms had a couple of problems. 
-
+\par However, the early TWEANN algorithms had a couple of problems. 
 First one of them was the problem of competing conventions. It arises when two different genomes encode the same
 functional structure in different ways. This causes the algorithm to treat them as different structures, and therefore hinders
 their ability to combine their successful traits.
@@ -294,7 +293,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
     The chosen problems should represent a range of complexities and types, enabling a comprehensive assessment of the NEAT
     algorithm's performance and adaptability.
 
-    For this implementation, the selected test problems were: XOR, Cartpole, Acrobot, and BipedalWalker.
+    \par For this implementation, the selected test problems were: XOR, Cartpole, Acrobot, and BipedalWalker.
     The XOR problem, a classic benchmark in neural network research, serves as an initial
     test to assess the algorithm's basic functionality in solving simple, non-linear problems. It can also be thought
     of as a sanity check during development and debugging, as it enables quick iteration and evaluation of the algorithm.
@@ -329,7 +328,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         The problem is simple yet non-linear, and provides an ideal challenge for testing the effectiveness of NEAT in evolving
         a network that can discriminate between inputs where the output is true if and only if one of the inputs is true.
 
-        In the context of NEAT, the XOR problem is particularly useful because it requires the evolution
+        \par In the context of NEAT, the XOR problem is particularly useful because it requires the evolution
         of both network structure and connection weights to successfully solve. Since the problem cannot
         be solved with a linear perceptron without hidden layers, NEAT's ability to innovate new structures by adding nodes and
         connections is put to the test. This makes the XOR problem a comprehensive benchmark,
@@ -338,7 +337,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         indicator of its overall effectiveness in harder, real-world tasks,
         where the ability to evolve complex network structures is essential.
 
-        XOR problem is also the ideal problem to experiment on and test the various effects of the algorithm's configuration and extension,
+        \par XOR problem is also the ideal problem to experiment on and test the various effects of the algorithm's configuration and extension,
         as it is simple enough to be evaluated quickly on home computers despite little work being put into optimization of the
         current implementation,
         and even running it a thousand times for the sake of statictical significance is not troublesome.
@@ -384,7 +383,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         Success in the BipedalWalker problem is measured not just by the distance traveled,
         but also by how efficiently and smoothly the agent moves, penalizing excessive stumbling or inefficient gaits.
 
-        The BipedalWalker problem is an excellent candidate for evaluating the NEAT
+        \par The BipedalWalker problem is an excellent candidate for evaluating the NEAT
         algorithm for several reasons. Firstly, the problem's inherent complexity, with its continuous state and action spaces,
         poses a significant challenge to traditional fixed-topology neural networks.
         NEAT's unique approach of evolving both the structure and weights of neural networks aligns well with the need 
@@ -392,7 +391,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
         incrementally discover and refine network architectures that effectively coordinate the walker's
         movements, adapting to the terrain while maintaining balance and forward momentum.
 
-        Moreover, the BipedalWalker problem serves as a rigorous test of NEAT's capability to handle tasks requiring fine-grained
+        \par Moreover, the BipedalWalker problem serves as a rigorous test of NEAT's capability to handle tasks requiring fine-grained
         control and decision-making under uncertainty. The varying terrain presents a range of scenarios,
         challenging the algorithm to evolve versatile and robust solutions. NEAT's ability to evolve and optimize
         complex neural networks is crucial in developing a controller that can generalize well across different landscapes,
@@ -408,7 +407,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
             \item networkx - used for creating the graph of the genome's tooplogy 
             \item pyvis - used for visualizing the graph of genome's topology
         \end{itemize}
-        Additionaly, the problems sometimes require additional dependencies. Those being:
+        Additionaly, some of the problems require additional dependencies. Those being:
         \begin{itemize}
             \item gymnasium \cite{gymnasium} - used in cartpole, acrobot and bipedalwalker problems to simulate the environment
             \item torch \cite{Pytorch} - used in problems that require tweaking the activation function, as torch primitives enable easy control over the numerical precision. 
@@ -421,24 +420,16 @@ Then, the generation loop starts. During each generation, the algorithm does the
         Standard library of Python was used extensively to make sure the implementation is easy to follow.
         \subsection{Core algorithm}
         The core algorithm if NEAT is implemented in ~400 lines of Python in model.py
-        The base for a single agent is a class called Genome. It contains a list of nodes and a list of connections for this particular 
-        specimen, as well as a fitness value. Nodes and Connections have their own respectively named classes, both of which are accessing
-        their Genomes' config object to get information about their ids and innovation numbers. Genome also controls the mutation process of itself,
-        having separate methods for mutations of nodes, connections, and weights. Genome's config is a shared object between all genomes, and it is 
-        given to it by a Population object during its initialization. Population is a class that controls the whole algorithm. It is responsible for
+        The base for a single agent is a class called Genome. It contains a list of nodes and a list of connections for this particular specimen,
+        as well as a fitness value. It also defines as methods all behavior that can be attributed to a single genome,
+        such as calculating distance, mutating, evaluating, recalculating layers as well as serializing and deserializing itself.
+        Genome's config is a shared object between all genomes, and it is given to it by a Population object during its initialization.
+        Nodes and Connections have their own respectively named classes, both of which are accessing
+        their Genomes' config object to get information about their ids and innovation numbers.
+        Population on the other hand, is a class that controls the whole algorithm. It is responsible for
         maintaining a list of genomes, list of species, and maintaining a coherent state between all the mutations of genomes and changes in specie set.
-        It is also responsible for the toplevel loop, that runs the algorithm for a given number of generations. The single iteration of that loop looks like this:
-        \begin{enumerate}
-            \item Divide the population into Species
-            \item Calculate fitness of each individual genome
-            \item Check for exit condition
-            \item Calculate adjusted fitness of each individual genome
-            \item Calculate offspring count for each specie
-            \item Create new generation by crossover and mutation of selected genomes and species
-            \item Repeat
-        \end{enumerate}
-        The Specie class is responsible for dealing with the speciation process and calculating relevant statistics for each (such as adjusted fitness or 
-        generation without improvement count). 
+        It is also responsible for the toplevel loop, that runs the algorithm for a given number of generations.
+        The Specie class is responsible for dealing with the speciation process and calculating relevant statistics for each (such as adjusted fitness or generation without improvement count). 
         \subsection{Configuration}
         Population object is initialized with a Config object, which is a main way to configure algorithm. It is a simple object with a set of fields
         and a couple of methods. Most of the fields have default values, and are not required to be set manually by the user. The few fields that are
@@ -497,19 +488,57 @@ Then, the generation loop starts. During each generation, the algorithm does the
             where $c_n$ is the correct output and $o_n$ is the output of the network, for the problem's case number $n$.
             Recurrent connections are disabled.
             \item Cartpole - Here the configuration's meta field is used to store the name of the environment in gymnasium. That 
-            variable is then used during Population initialization to create an environment. Fitness function then accesses that 
+            variable is then used during Population initialization to create an environment.
+            Todal fitness is calculated by summing the reward for each timestep, and then dividing it by the number of timesteps.
+             function then accesses that 
             environment to evaluate the genome.  
             \item Acrobot - Similarly to previous problem, configuration here utilizes meta field for Gymnasium's environment name. 
             Other than that, the configuration is standard with only mandatory fields being set.
-            \item BipedalWalker - This problem required the most adjustments to the configuration. First of all, the fitness function 
+            \item BipedalWalker - This problem required the most adjustments to the configuration.
+            This was because NEAT was not designed to ever work with a negative fitness, as this would break the adjusted fitness calculation.
+            In this environment, however, the fitness can become negative if the agent is not moving forward.
+            The specific mechanism that fails in this context is as follows:
+
+            During the early parts of the training, majority of agents have fitness that oscillates around 0, often venturing into negative territory.
+            This means that the adjusted fitness of the specie is also oscillating around 0, which results in the average adjusted fitness of the population 
+            also being in that range. Now, the offspring calculation for specie mentioned earlier depends on the sum of adjusted fitness of the specie and
+            total average of adjusted fitness in a population. Given that both of those values are oscillating around 0, the offspring count for a specie
+            is not only independant from its own fitness, the selection pressure can be inverted if the overall average of adjusted fitness is negative.
+            This is presented in the following table:
+
+    % Zastępujące wygenerowaną brzydką tabelę taką z dividerem
+    %\begin{tabular}[c]{@{}l@{}}\diagbox{Sum adjusted \\ fitness(specie)}{ Total adjusted \\ fitness average}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
+
+
+\begin{table}[H]
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{|l|l|l|l|l|}
+    \hline
+    \begin{tabular}[c]{@{}l@{}}\diagbox{Sum adjusted \\ fitness(specie)}{ Total adjusted \\ fitness average}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
+    $(-\infty, -1)$                                                                                        & \begin{tabular}[c]{@{}l@{}}incidentally correct,\\ but misleading because\\ of that\end{tabular} & \begin{tabular}[c]{@{}l@{}}correct direction,\\ breaking proportion\end{tabular}                                            & \begin{tabular}[c]{@{}l@{}}incorect direction,\\ correct proportion,\\ and useless for \\ calculation\end{tabular} & \begin{tabular}[c]{@{}l@{}}incorrect, making\\ good genome have\\ small offspring\end{tabular}  \\ \hline
+    $(-1, 0 ) $                                                                                            & \begin{tabular}[c]{@{}l@{}}the worse the model\\ the bigger the offspring\end{tabular}           & \begin{tabular}[c]{@{}l@{}}correct direction,\\ wrong proportion\end{tabular}                                               & \begin{tabular}[c]{@{}l@{}}incorrect direction\\ and proportion,\\ useless for\\ calculation\end{tabular}          & \begin{tabular}[c]{@{}l@{}}incorrect, making \\ good genome have\\ small offspring\end{tabular} \\ \hline
+    $(0,1)$                                                                                                & \begin{tabular}[c]{@{}l@{}}model's fitness appearing\\  better than actually is\end{tabular}     & \begin{tabular}[c]{@{}l@{}}correct direction,\\ correct proportion,\\ but useless for \\ offspring\end{tabular}             & Correct                                                                                                            & Correct                                                                                         \\ \hline
+    $(1, \infty)$                                                                                          & correct                                                                                          & \begin{tabular}[c]{@{}l@{}}correct direction,\\ correct proportion, \\ but useless for\\ offspring calculation\end{tabular} & Correct                                                                                                            & Correct                                                                                         \\ \hline
+    \end{tabular}%
+    }
+    \end{table}
+            This problem unadressed, would lead to the population stagnating at the beginning of the training. Species going in the right direction would
+            get dramatically less offspring than the ones going in the wrong direction, just because the average adjusted fitness of the population was negative.
+            Conversely, the worst performing species would often explode in size due to the negatives cancelling each other.
+            There was also a problem with a situation, where the average adjusted fitness for the population was in the range of $(-1,1)$, where a 
+            specie with a large absolute value of its fitness and sign matching one on the population average could suddenly produce offspring
+            that was mutiple of theoretically possible population size
+            and the population would not be able to progress.   
+            \par To solve that problem, the fitness function 
             was tasked with offsetting the reward given by the environment, as its broad range of possible values was causing
-            problems during adjusted fitness calculation, and therefore affecting mating pool selection. The fitness function was 
-            programmed to cut minimum environment fitness value to a -100, and then offset that by 100 to make sure the fitness was always in range
+            problems during adjusted fitness and offspring calculation, and therefore affecting mating pool selection. The fitness function was 
+            programmed to cut minimum environment fitness value at -100, and then offset that by 100 to make sure the fitness was always in range
             of 0-400. This fixed the problem of adjusted fitness calculation, but also forced us to increase the fitness threshold 
             for the problem by a 100. For clarity and coherent experience, custom printing function was used to print the 'environment' fitness
-            for the problem, as it is more intuitive. During the testing of this setup, it was discovered that 
+            , as it is more intuitive. 
+            Second problem encountered during the testing of this setup, was that 
             the agent would often get stuck in an unrecoverable position and slow down the simulation by having to wait for the upper limit of time
-            for the task to be reached. To fix this behavior, an additional variable was introduced to the model evaluation loop. It
+            for the task to be reached.\par To fix this behavior, an additional variable was introduced to the model evaluation loop. It
             tracked the amount of timesteps since last improvement in the environment, and terminated the simulation if that number exceeded 
             a certain constant amount. This helped to increase the speed of learning, while not affecting the quality of the model in any way.
             Walker also needed its own activation function, as the baseline sigmoid function was not able to provide values in range [-1, 1].
@@ -521,8 +550,8 @@ Then, the generation loop starts. During each generation, the algorithm does the
             \resizebox{\columnwidth}{!}{%
             \begin{tabular}{|l|l|l|l|l|l|}
             \hline
-                                                                                                 & Found solutions & \begin{tabular}[c]{@{}l@{}}Average generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}Std. dev. generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}average nodes\\ in final structure\end{tabular} & \begin{tabular}[c]{@{}l@{}}average connections\\ in final structure\end{tabular} \\ \hline
-            Basic config                                                                         & 912 / 1000      & 124.94                                                                       & 63.40                                                                          & 9.48                                                                       & 20.59                                                                            \\ \hline
+            & Found solutions & \begin{tabular}[c]{@{}l@{}}Average generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}Std. dev. generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}average nodes\\ in final structure\end{tabular} & \begin{tabular}[c]{@{}l@{}}average connections\\ in final structure\end{tabular} \\ \hline
+            Basic config                                                                         & 912 / 1000     & 124.94                                                                       & 63.40                                                                          & 9.48                                                                       & 20.59                                                                            \\ \hline
             Bias node added                                                                      & 834 / 1000      & 136.31                                                                       & 70.80                                                                          & 11.03                                                                      & 23.37                                                                            \\ \hline
             Dynamic threshold off                                                                & 634 / 1000      & 125.62                                                                       & 68.36                                                                          & 10.72                                                                      & 22.39                                                                            \\ \hline
             \begin{tabular}[c]{@{}l@{}}Dynamic threshold off\\  and bias node added\end{tabular} & 339 / 1000      & 132.03                                                                       & 72.10                                                                          & 12.55                                                                      & 25.57                                                                            \\ \hline
