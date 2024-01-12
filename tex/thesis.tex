@@ -323,23 +323,47 @@ Then, the generation loop starts. During each generation, the algorithm does the
     Benchmarking evolutionary algorithms on such problems helps ensure that our implementation
     is tested in scenarios that have real-world relevance.
     
-
         \subsection{XOR}
-        Xor problem is a simple problem used mostly to test if the algorithm can start generating structure. 
-        This is because XOR function is non linearly separable - it cannot be solved by the simple topology that neat starts with.
-        To solve it, the algorithm needs to evolve a hidden layer. 
-        This problem is thus used to test if the algorithm can generate minimal structure - the original paper \cite{originalNeat}
+        The XOR (exclusive or) problem is a classic benchmark for evaluating the performance and capability of neural network algorithms,
+        including NeuroEvolution of Augmenting Topologies.
+        The problem is simple yet non-linear, and provides an ideal challenge for testing the effectiveness of NEAT in evolving
+        a network that can discriminate between inputs where the output is true if and only if one of the inputs is true.
+
+        In the context of NEAT, the XOR problem is particularly useful because it requires the evolution
+        of both network structure and connection weights to successfully solve. Since the problem cannot
+        be solved with a linear perceptron without hidden layers, NEAT's ability to innovate new structures by adding nodes and
+        connections is put to the test. This makes the XOR problem a comprehensive benchmark,
+        as it not only assesses the algorithm's optimization capabilities for weights but also its proficiency in discovering
+        effective network topologies. The performance of NEAT on the XOR problem is often a critical
+        indicator of its overall effectiveness in harder, real-world tasks,
+        where the ability to evolve complex network structures is essential.
+
+        XOR problem is also the ideal problem to experiment on and test the various effects of the algorithm's configuration and extension,
+        as it is simple enough to be evaluated quickly on home computers despite little work being put into optimization of the
+        current implementation,
+        and even running it a thousand times for the sake of statictical significance is not troublesome.
+        This provides a built-in problem with a short feedback loop, which is crucial for 
+        enabling programmers to rapidly identify and correct issues, optimize performance, and experiment with different configurations.
+        Short feedback loops facilitate quicker learning and adaptation, especially for new programmers who are approaching the codebase.
+        It allows them to understand the impact of their changes immediately, encouraging a more intuitive and hands-on learning experience.
+        This property is in line with the fact that this implementation is meant to be, among other things, a learning resource.
+
+        The original paper \cite{originalNeat}
         states that the algoritm can solve the problem with 1 node in the hidden layer (However,
         it does require that the starting topology has an additional input node designated
         as bias, connected straight to the output). Both of these conditions are tested in this work.
-        XOR problem is the ideal problem to test the various effects of the algorithm's configuration, as it is simple enough to be
-        evaluated quickly even on home computers, and even running it for a thousand times is not a problem.
+
         \subsection{Cartpole}
-        Cartpole is a problem taken from Farama Foundation's Gymnasium library \cite{gymnasium}. It is a classic control problem, 
-        where an agent tries to balance a pole on a cart. The agent's observation space consists of cart's 
-        position, velocity, angle of the pole and its angular velocity. The agent can move the cart left or right.
+        Cartpole is a problem taken from Farama Foundation's Gymnasium library \cite{gymnasium}. It is a classic control problem,
+        often used in testing reinforcement learning algorithms.
+        This problem presents a simulation where an upright pole is attached to a cart moving along a frictionless track.
+        The objective is to prevent the pole from falling over by moving the cart left or right.
+        The challenge lies in balancing the pole,
+        which requires a nuanced understanding of physical dynamics like gravity, inertia, and force.
+        The agent's observation space consists of cart's 
+        position, velocity, angle of the pole and its angular velocity.
         This problem is a test of the implementation's ability to solve a basic real-world problem, but contrary 
-        to the xor problem, its model is subjected to multiple sequential runs,
+        to the XOR problem, its model is subjected to multiple sequential runs,
         with its fitness being judged based on its cumulative performance across these runs. This means, that
         recurrent connections can potentially be used.
         \subsection{Acrobot}
@@ -350,11 +374,32 @@ Then, the generation loop starts. During each generation, the algorithm does the
         THis problem also is evaluated as a single evaluation session, being subjected to multiple sequential runs,
         with its fitness being judged based on its cumulative performance across these runs.
         \subsection{BipedalWalker}
-        BipedalWalker is the hardest problem used in this work. It is a problem taken from Farama Foundation's
-        Gymnasium library \cite{gymnasium}. The agent tries to control a bipedal robot and make it walk to the end of the map, while
-        making its movements energy-efficient. The observation space is significantly bigger than in previous problems,
-        consisting of 24 values. The action space somewhat similar, but due to the problem specifics, requiring a 
-        much more precise control. 
+        The BipedalWalker problem, featured in the Gymnasium library \cite{gymnasium},
+        represents a sophisticated and challenging task, usually used in the domain of reinforcement learning and artificial intelligence.
+        In this simulation, the objective is to control a two-legged agent, or "walker," to navigate
+        across a terrain with varying topography towards a designated target. The complexity arises from the
+        need to coordinate the movements of the walker's legs, ensuring balance, forward motion, and adaptability to the changing landscape.
+        This task requires control of multiple joints and limbs, all subjected to realistic physics constraints as well as understanding
+        of observation space significantly bigger than in previous problems, consisting of 24 values.
+        Success in the BipedalWalker problem is measured not just by the distance traveled,
+        but also by how efficiently and smoothly the agent moves, penalizing excessive stumbling or inefficient gaits.
+
+        The BipedalWalker problem is an excellent candidate for evaluating the NEAT
+        algorithm for several reasons. Firstly, the problem's inherent complexity, with its continuous state and action spaces,
+        poses a significant challenge to traditional fixed-topology neural networks.
+        NEAT's unique approach of evolving both the structure and weights of neural networks aligns well with the need 
+        for advanced control strategies in the BipedalWalker environment. The algorithm can 
+        incrementally discover and refine network architectures that effectively coordinate the walker's
+        movements, adapting to the terrain while maintaining balance and forward momentum.
+
+        Moreover, the BipedalWalker problem serves as a rigorous test of NEAT's capability to handle tasks requiring fine-grained
+        control and decision-making under uncertainty. The varying terrain presents a range of scenarios,
+        challenging the algorithm to evolve versatile and robust solutions. NEAT's ability to evolve and optimize
+        complex neural networks is crucial in developing a controller that can generalize well across different landscapes,
+        an essential feature for real-world applications. The BipedalWalker problem, therefore,
+        provides a rich and dynamic environment to assess NEAT's effectiveness in evolving neural networks that can handle complex,
+        multi-dimensional control tasks, demonstrating its potential in advanced robotics and AI challenges.
+
     \section{Implementation details}
         \subsection{Technology choices}
         The implementation is written in Python 3.11.5, and the dependencies needed for the core to work are:
@@ -501,7 +546,7 @@ From our results, there can be many conclusions. The problems do not constitute 
 difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
 as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
 of exploring its current topology. 
-\subsection{XOR trials}
+
     The results of XOR trials are suprising. They do show that the algorithm can solve the task, and that the default configuration is suitable for it.
     However, there are two things that are worth noting. First, the usage of a bias node seems to make the problem harder to solve, 
     which is the opposite of what we would expect. This could be due to the fact that having a bias node initially 
@@ -518,19 +563,19 @@ of exploring its current topology.
     where the problem is hard to solve. What is suprising about this is that the difference in performance is so big for
     such a simple problem. This solution is also not very robust compared to the original one, achieving only 91.2\% success rate
     compared with 100\% of the original, and taking far more generations to find the solution.
-\subsection{Cartpole}
+
     The results of cartpole trials are not very useful. The problem is solved in all 1000 trials, but the results suggest, that 
     this problem is too easy for the algorithm to be a good test of its capabilities. The average number of generations is 2.77, 
     meaning that the algorithm is able to solve the problem in less than 3 generations on average. To solve cartpole problem, the
     algorithm doesn't need to evolve any structure, as the starting topology is enough to solve the problem. The problem is therefore
     not inspected further.
-\subsection{Acrobot}
+
     Solution to the acrobot problem is showing more promise than the cartpole, but ultimately also fails to provide a 
     good challenge to the algorithm. The problem is solved in all 1000 trials, and even though the average number of generations is up, it 
     is still only 4.45. The average number of nodes and connections in the solution is also very low, with 8.95 and 17.07 respectively. 
     Given that the minimal starting genome for this problem has 8 nodes and 15 connections, it is safe to say this problem can be 
     categorized as trivial.
-\subsection{Walker}
+
     The case of bipedalwalker is a curious one. The model can reliably learn to walk to the end of the map (corresponding
     to this is fitness of about ~150-200). It cannot however finish the course with a cumulative fitness required by the
     environment. How is that possible? The environment in bipedalwalker has total fitness requirement of 300, divided
