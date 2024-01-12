@@ -507,14 +507,14 @@ Then, the generation loop starts. During each generation, the algorithm does the
             This is presented in the following table:
 
     % Zastępujące wygenerowaną brzydką tabelę taką z dividerem
-    %\begin{tabular}[c]{@{}l@{}}\diagbox{Sum adjusted \\ fitness(specie)}{ Total adjusted \\ fitness average}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
+    %\begin{tabular}[c]{@{}l@{}}\diagbox{ Total adjusted \\ fitness average}{Sum adjusted \\ fitness(specie)}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
 
 
 \begin{table}[H]
     \resizebox{\columnwidth}{!}{%
     \begin{tabular}{|l|l|l|l|l|}
     \hline
-    \begin{tabular}[c]{@{}l@{}}\diagbox{Sum adjusted \\ fitness(specie)}{ Total adjusted \\ fitness average}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
+    \begin{tabular}[c]{@{}l@{}}\diagbox{ Total adjusted \\ fitness average}{Sum adjusted \\ fitness for specie}\end{tabular} & $(-\infty, -1)$ & $(-1, 0 ) $ & $(0,1)$ & $(1, \infty)$ \\ \hline
     $(-\infty, -1)$                                                                                        & \begin{tabular}[c]{@{}l@{}}incidentally correct,\\ but misleading because\\ of that\end{tabular} & \begin{tabular}[c]{@{}l@{}}correct direction,\\ breaking proportion\end{tabular}                                            & \begin{tabular}[c]{@{}l@{}}incorect direction,\\ correct proportion,\\ and useless for \\ calculation\end{tabular} & \begin{tabular}[c]{@{}l@{}}incorrect, making\\ good genome have\\ small offspring\end{tabular}  \\ \hline
     $(-1, 0 ) $                                                                                            & \begin{tabular}[c]{@{}l@{}}the worse the model\\ the bigger the offspring\end{tabular}           & \begin{tabular}[c]{@{}l@{}}correct direction,\\ wrong proportion\end{tabular}                                               & \begin{tabular}[c]{@{}l@{}}incorrect direction\\ and proportion,\\ useless for\\ calculation\end{tabular}          & \begin{tabular}[c]{@{}l@{}}incorrect, making \\ good genome have\\ small offspring\end{tabular} \\ \hline
     $(0,1)$                                                                                                & \begin{tabular}[c]{@{}l@{}}model's fitness appearing\\  better than actually is\end{tabular}     & \begin{tabular}[c]{@{}l@{}}correct direction,\\ correct proportion,\\ but useless for \\ offspring\end{tabular}             & Correct                                                                                                            & Correct                                                                                         \\ \hline
@@ -543,6 +543,94 @@ Then, the generation loop starts. During each generation, the algorithm does the
             a certain constant amount. This helped to increase the speed of learning, while not affecting the quality of the model in any way.
             Walker also needed its own activation function, as the baseline sigmoid function was not able to provide values in range [-1, 1].
             \end{itemize}
+
+    \subsection{Introspection mechanisms}
+    In a implementation that focuses on being a learning resource, it is important to provide tools
+    that will help the user understand what is happening during the training,
+    and how the process of evolution progresses. To do that,
+    We have implemented a couple of minimalistic tools that can be used to inspect parts of
+    the state of the algorithm during training.
+    This is done without potentially invasive hooking into any part of live training process.
+    Instead, the configuration object has a couple of optional functions that can be implemented by the user.
+    These functions are then called by the algorithm at specific points during the training process, saving data
+    or performing other user-defined actions.
+    \par To talk about a specific example: an optional function 'every\_generation' from the configuration
+    class is given an implementation that serves the purpose of serializing parts of the state of the population every 10 generations.
+    Such function is then loaded during processing of the configuration, and then executed accordingly to its name. 
+    This method, while simple, allows us to inspect the progress of training without having to wait for the
+    whole process to finish, which greatly benefits the development process, especially while experimenting with
+    more complex problems and environments that can take a long time to train fully.
+    \par The model-side of this mechanism is implemented inside a specific problem file, usually in the form of
+    an 'every\_generation' function, that gets executed after every generation, and has access to the population object.
+    Inside that function we can define the logic for serializing, visualizing, or even modifying the parameters of 
+    the running algorithm. Basic example of such function is presented below:
+    \begin{verbatim}
+    def every_generation(p:Population):
+      if p.generation % 10 == 0 and p.generation > 0:
+        name = f"gen_{p.generation}"
+        f = open(f"{p.path}/{name}.pkl", "wb")
+        dill.dump(p.organisms[0], f )
+        f.close()
+        print(f"Saved model {p.serial_number} {name}")
+    \end{verbatim}
+    Each population object creates its own unique identification string, which is then used to create a folder for the experimental run. This way after changing the code we can compare our new results with previous one, assuming we were
+    using the same metrics. This also means we won't accidentally overwrite our results from before.
+    This allows us to save f.ex. the best genome every 10 generations, and then inspect it later. But inspection is not 
+    that interesting in vaccum. To make it more useful, we have implemented a tiny tool that utilizes
+    the saved genomes and can visualize a run of it in its environment. This tool is called Reader.py,
+    and is used to load a serialized genome from an experiment running a gymnasium
+    environment and visualize its performance.
+    It can be called with a serial number and name of the generation,
+    or just with the a path to a serialized genome. The reader loads up model with its configuration,
+    and then runs the environment in the visualization mode (as opposed to when the 
+    model is in training, running environment in headless mode for speed). This allows for continuous inspection of the
+    model's results while also not slowing down the training process.
+    \begin{verbatim}
+    # loads up generation 120 from model 9H4VRW 
+    $ python Reader.py 9H4VRW 120  
+    # loads up generation 120 from model 9H4VRW using path
+    $ python Reader.py ./tmp/BIPEDAL/9H4VRW/gen_120.pkl
+    \end{verbatim}
+
+    \par Another use for the introspection mechanism is to visualize the topology of the best genome in a given generation.
+    This mechanism doesn't require any additional code, as the visualization functionality is implemented inside the
+    core model itself. It is done by pyvis and networkx libraries,
+    allowing us to generate a graph of the genome's topology.
+    \begin{verbatim}
+def after_finished(p:Population):
+  champ = p.champion
+  champ.save_brain(f"{p.path}/champ.html")
+    \end{verbatim}
+    This topology can be easily viewed later without additional software, as the graph gets saved into a canvas
+    object inside a html file.
+    \begin{verbatim}
+    $ open ./tmp/XOR/0DD16V/champ.html
+    \end{verbatim}
+    \par Last example of usage of introspection mechanism implemented is the ability to save results of the whole run
+    after finishing. This is usefull for saving statistical data about the run, such as average fitness of the population,
+    or the number of generations it took to solve the problem. This is done by implementing the after\_finished function
+    in the configuration, and then using it to save the data. This is done by using the same serialization mechanism
+    as in the previous example. 
+\begin{verbatim}
+def after_finished(p:Population):
+  champ = p.champion
+  champStats =
+    f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
+  with open(f"{p.path}/champStats.txt", "w") as f:
+    f.write(champStats)
+\end{verbatim}
+    \par We could easily extend this mechanism to save more data, such as the number of nodes
+    and connections in the best genome, make it run on every iteration with differnt data,
+    make it save data in a more structured way, such as a csv file,
+    or even save data file for a plotting library/program like gnuplot or matplotlib.
+    \par To conclude the matters of itrospection, we have implemented a couple of
+    simple tools that can be composed into powerful and versatile introspection mechanisms.
+    This allows for potentially infinite extensibility, as the users can themselves implement 
+    ways of gathering data about the training process, and then use it to improve
+    their understanding of the algorithm, or even to improve the algorithm itself.
+    This also allows us to have a clear boundary between the core algorithm and the tools
+    used to inspect it.
+
 \section{Experimental results}
 \begin{itemize}
     \item XOR
@@ -621,7 +709,7 @@ of exploring its current topology.
      once it gets to the end of the map consistently, there is no clear way for it to improve its fitness (the 
      act of walking efficiently seems to need far more structure, which is hard to evolve when there is small 
      reward to be gained at this point.
-      )
+    )
     are very long, with the fitness being reduced by the environment constituting a very small part of the total fitness missing.
 \section{Future work}
     Proposed future work is divided into two categories: 
@@ -639,15 +727,8 @@ of exploring its current topology.
         It would be good to implement a multithreaded evaluation, which would speed up the process significantly.
 \section{TODO \& Notes}
 \begin{itemize}
-    \item Opisać problem napotkany przy uzyciu negatywnego fitnessu, tak jak w https://www.cs.ucf.edu/~kstanley/neat.html , 
-    sekcja "dobieranie problemów do algorytmu"?
-    quote:
-
-"Is there a way to use negative fitnesses in NEAT?
-You may have noticed that if you try to use negative fitnesses, NEAT breaks down because of fitness sharing, which requires positive fitness values.
-Real Carbonneau suggested the following solution to this problem: Compute fitness as you wish, with negative values if desired. Then, adjust all the fitnesses by replacing them with the distance between the actual fitness and the lowest fitness in the population. This will scale all the fitnesses above zero, keeping the relationships stable. "
 \item cytowania; pomysły: rzeczy z orginalnego papera o TWEANN i metodach, strona autora https://www.cs.ucf.edu/~kstanley/neat.html, strona hyperNeata (do omówienia extensions)
-\item neuroevolution vs gradient descent
+\item neuroevolution vs gradient descent ?
 \end{itemize}
 \bibliography{references}
 \end{document}
