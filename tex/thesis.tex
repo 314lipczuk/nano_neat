@@ -118,8 +118,46 @@ commonly found in machine learning and pattern recognition tasks. Graph-based en
 where solutions are best represented as graphs. These encoding schemes, while potentially more powerful and expressive than linear encoding,
 also bring challenges related to maintaining the validity of solutions after genetic operations and ensuring efficient exploration of the solution space.
 The effectiveness of a genetic algorithm is heavily dependent on the appropriateness of its encoding scheme to the problem at hand, as it directly affects the algorithm's ability to generate and evolve valid, high-quality solutions.
-\subsection{Innovation}
 
+\subsection{Introduction to neural networks}
+
+Neural networks are a broad topic in machine learning, and there are many different types of neural networks.
+
+The basic building block behind them is a 
+perceptron (also called McCulloh-Pitts neuron) - a mathematical model of a biological neuron. A single perceptron consists of a set of inputs, a set of weights, a bias,
+an activation function, an output, and a summation function.
+It works by taking in the inputs, multiplying them by their respective weights, 
+summing them up using the summation function, and then calculating the output by passing the result of the summation function through the activation function.
+
+The activation function determines what in the biological neuron would be the state of the neuron - whether it is firing or not. Whether the activation
+is discrete or continuous is the problem of specific type of perceptron we want to use. Popular for that purpose is sigmoid function, outputting values between 0 and 1.
+In this system, the bias node is a factor that can change the threshold of activation of the neuron.
+It can be implemented as a node that is always set to 1, and its weight is the bias of the neuron.
+
+The perceptron was one of the first steps in the development of neural networks, and is conceptually an important building block in more 
+complex neural networks, but it has some clear limitations.
+Single perceptron was originally designed as a binary classfier. 
+By itself it can never learn to solve non-linearly
+separable problems, that means problems that cannot be solved by drawing a single line through the data.
+In order to deal with that problem, the concept of a multi-layer perceptron was introduced.
+It is a network with multiple layers of neurons.
+The outputs of the earlier layers then become the inputs of the later layers.
+This allows for solving non-linearly separable problems. Such multi layer perceptron is also called a feed-forward neural network.
+The name comes from the fact that the information flows only in one direction - from the input layer, through the hidden layers,
+to the output layer. This is the most basic type of neural network. 
+The learning in such network is usually done by using backpropagation to adjust weights. 
+We introduce an error function, sometimes called loss function that measures how far the given output of the network is from the wanted one.
+Backpropagation is a method of calculating the gradient of the error function with respect to the weights of the network. The name is derived from the fact that
+this process is done starting from the output layer, and going backwards thought the network - adjusting the weights to minimize the error.
+There are however some limitations to it: it tends to get stuck in local maxima, as there is no guarantee that the gradient that backpropagation climbs
+will lead to the global maximum. It also requires the loss function to be differentiable, which is not always the case. As a result, alternative approaches
+to learning problem arose. One of them is the concept of neuroevolution, which applies genetic algorithms to the training and creating of neural networks. 
+Fundamentally, the evaluation process stays the same for both approaches, but change in state of the model is done by genetic algorithms instead of backpropagation.
+
+It is also possible for a genetic algorithm that used indirect encoding construct the network from scratch every time it needs one evaluated. In those cases, 
+learning is done on whatever structures the algorithm uses internally to represent its state, and the network is just a way of producing a 'computationally reliazable' solution.
+
+\subsection{Innovation}
 Encoding in NEAT refers to how the structure and information of a neural network are represented.
 NEAT uses a genetic encoding that describes both the topology of the network and the connection weights in such a way, that information about
 where a gene came from is preserved. This is done by assigning a unique global innovation number to each new connection in the population.
@@ -363,15 +401,27 @@ Then, the generation loop starts. During each generation, the algorithm does the
         position, velocity, angle of the pole and its angular velocity.
         This problem is a test of the implementation's ability to solve a basic real-world problem, but contrary 
         to the XOR problem, its model is subjected to multiple sequential runs,
-        with its fitness being judged based on its cumulative performance across these runs. This means, that
+        with its fitness being judged based on its cumulative performance from these runs. This means, that
         recurrent connections can potentially be used.
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{cartpole.png}
+        \caption{Visualization of the cartpole problem}
+    \end{figure}
         \subsection{Acrobot}
-        Acrobot is a similar problem to the cartpole, with a slightly bigger state space. The problem consists
+        Acrobot (also from gymnasium library \cite{gymnasium}) is a similar problem to the cartpole, with a slightly bigger state space. The problem consists
         of a two-link system, one of its ends fixed to a certain position. All of the joints are allowed to rotate,
         abd the agent is given control over an actuated joint between the two links. Its goal is to swing the
         end of the free link over given height (while starting from a hanging position). 
-        THis problem also is evaluated as a single evaluation session, being subjected to multiple sequential runs,
-        with its fitness being judged based on its cumulative performance across these runs.
+        The behavior of the system is governed by the laws of physics, and the agent is given information about the
+        current state of the system, such as the angles of the joints and their velocities. 
+        This problem also is evaluated as a single evaluation session, being subjected to multiple sequential runs,
+        with its fitness being judged based on its cumulative performance from these runs.
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{acrobot.png}
+        \caption{Visualization of the acrobot problem}
+    \end{figure}
         \subsection{BipedalWalker}
         The BipedalWalker problem, featured in the Gymnasium library \cite{gymnasium},
         represents a sophisticated and challenging task, usually used in the domain of reinforcement learning and artificial intelligence.
@@ -390,6 +440,12 @@ Then, the generation loop starts. During each generation, the algorithm does the
         for advanced control strategies in the BipedalWalker environment. The algorithm can 
         incrementally discover and refine network architectures that effectively coordinate the walker's
         movements, adapting to the terrain while maintaining balance and forward momentum.
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{walker.png}
+        \caption{Visualization of the BipedalWalker-v3 problem}
+    \end{figure}
 
         \par Moreover, the BipedalWalker problem serves as a rigorous test of NEAT's capability to handle tasks requiring fine-grained
         control and decision-making under uncertainty. The varying terrain presents a range of scenarios,
@@ -475,6 +531,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
             initial\_threshold                   & 3                      & \begin{tabular}[c]{@{}l@{}}An initial threshold value for calculating\\  distance between two\\  genomes during speciation\end{tabular}           \\ \hline
             \end{tabular}%
             }
+            \caption{All of the configuration parameters along with their default values.}
         \end{table}
         The fields presented here are all generic over the problem the algorithm is trying to solve. If a problem requires a specific configuration,
         (like a name of environment in gymnasium, or an offset for calculating fitness) it is stored in the meta field. This implementation was chosen
@@ -521,8 +578,9 @@ Then, the generation loop starts. During each generation, the algorithm does the
     $(1, \infty)$                                                                                          & correct                                                                                          & \begin{tabular}[c]{@{}l@{}}correct direction,\\ correct proportion, \\ but useless for\\ offspring calculation\end{tabular} & Correct                                                                                                            & Correct                                                                                         \\ \hline
     \end{tabular}%
     }
+    \caption{Overview of how the offsprint calculation is affected by negative values in its inputs.}
     \end{table}
-            This problem unadressed, would lead to the population stagnating at the beginning of the training. Species going in the right direction would
+            This problem unadressed would lead to the population stagnating at the beginning of the training. Species going in the right direction would
             get dramatically less offspring than the ones going in the wrong direction, just because the average adjusted fitness of the population was negative.
             Conversely, the worst performing species would often explode in size due to the negatives cancelling each other.
             There was also a problem with a situation, where the average adjusted fitness for the population was in the range of $(-1,1)$, where a 
@@ -632,43 +690,54 @@ def after_finished(p:Population):
     used to inspect it.
 
 \section{Experimental results}
+Experimental results showed that the system functions as intended, and is able to solve the problems it was designed to solve.
 \begin{itemize}
-    \item XOR
-        \begin{table}[H]
-            \resizebox{\columnwidth}{!}{%
-            \begin{tabular}{|l|l|l|l|l|l|}
-            \hline
-            & Found solutions & \begin{tabular}[c]{@{}l@{}}Average generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}Std. dev. generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}average nodes\\ in final structure\end{tabular} & \begin{tabular}[c]{@{}l@{}}average connections\\ in final structure\end{tabular} \\ \hline
-            Basic config                                                                         & 912 / 1000     & 124.94                                                                       & 63.40                                                                          & 9.48                                                                       & 20.59                                                                            \\ \hline
-            Bias node added                                                                      & 834 / 1000      & 136.31                                                                       & 70.80                                                                          & 11.03                                                                      & 23.37                                                                            \\ \hline
-            Dynamic threshold off                                                                & 634 / 1000      & 125.62                                                                       & 68.36                                                                          & 10.72                                                                      & 22.39                                                                            \\ \hline
-            \begin{tabular}[c]{@{}l@{}}Dynamic threshold off\\  and bias node added\end{tabular} & 339 / 1000      & 132.03                                                                       & 72.10                                                                          & 12.55                                                                      & 25.57                                                                            \\ \hline
-            \end{tabular}%
-            }
-            \end{table}
-    \item Acrobot 
-    Acrobot problem on default configuration solved the problem in all 1000 trials, with average
-    generations being 4.45, standard deviation being 3.5. We also measured mean and standard deviation
-    for the size of the structure that solved the problem. Average problem was solved in average of 8.95 nodes and 17.07
-    connections, with respective standard deviations being 1.09 and 2.38.
-    \item Cartpole
-    Cartpole problem on default configuration solved the problem in all 1000 trials, with average
-    generations being 2.77, standard deviation being 1.91. We also measured mean and standard deviation
-    for the size of the structure that solved the problem. Average problem was solved in average of 5.06 nodes and 4.12 
-    connections, with respective standard deviations being 0.31 and 0.66.
+\item XOR
+\begin{table}[H]
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+& Found solutions & \begin{tabular}[c]{@{}l@{}}Average generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}Std. dev. generations \\ to completion\end{tabular} & \begin{tabular}[c]{@{}l@{}}average nodes\\ in final structure\end{tabular} & \begin{tabular}[c]{@{}l@{}}average connections\\ in final structure\end{tabular} \\ \hline
+Basic config                                                                         & 912 / 1000     & 124.94                                                                       & 63.40                                                                          & 9.48                                                                       & 20.59                                                                            \\ \hline
+Bias node added                                                                      & 834 / 1000      & 136.31                                                                       & 70.80                                                                          & 11.03                                                                      & 23.37                                                                            \\ \hline
+Dynamic threshold off                                                                & 634 / 1000      & 125.62                                                                       & 68.36                                                                          & 10.72                                                                      & 22.39                                                                            \\ \hline
+\begin{tabular}[c]{@{}l@{}}Dynamic threshold off\\ and bias node added\end{tabular} & 339 / 1000      & 132.03                                                                       & 72.10                                                                          & 12.55                                                                      & 25.57                                                                            \\ \hline
+\end{tabular}%
+}
+\caption{Results of XOR problem on different configurations}
+\end{table}
+
+\item Acrobot 
+\par Acrobot problem on default configuration solved the problem in all 1000 trials, with average
+generations being 4.45, standard deviation being 3.5. We also measured mean and standard deviation
+for the size of the structure that solved the problem. Average problem was solved in average of 8.95 nodes and 17.07
+connections, with respective standard deviations being 1.09 and 2.38.
+\item Cartpole
+\par Cartpole problem on default configuration solved the problem in all 1000 trials, with average
+generations being 2.77, standard deviation being 1.91. We also measured mean and standard deviation
+for the size of the structure that solved the problem. Average problem was solved in average of 5.06 nodes and 4.12 
+connections, with respective standard deviations being 0.31 and 0.66.
+
+\item BipedalWalker
+\par This problem could not be finished in 50 runs, but it did show some interesting results. On its default configuration,
+it takes on average 155 generations for the best genome to reach the end of the map. This, however is not enough to finish the problem 
+stated in the environment, as the environment also takes into account the energy-efficiency of the agent's movements.
+The complexity of the problem is negatively impacting the speed of the iteration process, which is why we were not able to 
+probe the problem further.
 
 \end{itemize}
 \section{Conclusions}
-From our results, there can be many conclusions. The problems do not constitute a linear progression of 
+The problems do not constitute a linear progression of 
 difficulty, and we can broadly say, that Acrobot and Cartpole problems were not complex enough for the network,
 as a lot of the times they can be solved without evolving much of structure. They show, however that algorithm is capable
-of exploring its current topology. 
+of exploit its current topology. 
 
-    The results of XOR trials are suprising. They do show that the algorithm can solve the task, and that the default configuration is suitable for it.
+    The results of XOR show that the algorithm can solve the task, and that the default configuration is suitable for it.
     However, there are two things that are worth noting. First, the usage of a bias node seems to make the problem harder to solve, 
     which is the opposite of what we would expect. This could be due to the fact that having a bias node initially 
     makes the genome more susceptible to meaningless mutation of one more node and two more connections,
-    instead of focusing on evolving the correct structure.
+    instead of focusing on evolving the correct structure, or simply might suggest the fact that the optimal configuration
+    for the standard version is not the optimal configuration for the variant using a bias node.
     \begin{figure}
         \centering
         \includegraphics[width=0.8\textwidth]{xor_topology_example.png}
