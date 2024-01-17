@@ -3,6 +3,7 @@
 \bibliographystyle{unsrt}
 \usepackage{amsmath}
 \usepackage{diagbox}
+\usepackage{url}
 
 % table stuff
  \usepackage[normalem]{ulem}
@@ -414,6 +415,21 @@ Then, the generation loop starts. During each generation, the algorithm does the
         The problem is simple yet non-linear, and provides an ideal challenge for testing the effectiveness of NEAT in evolving
         a network that can discriminate between inputs where the output is true if and only if one of the inputs is true.
 
+        % Please add the following required packages to your document preamble:
+% \usepackage{graphicx}
+\begin{table}[H]
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{|l|l|l|}
+    \hline
+    $I_1$ & $I_2$ & O \\ \hline
+    0     & 0     & 0 \\ \hline
+    0     & 1     & 1 \\ \hline
+    1     & 0     & 1 \\ \hline
+    1     & 1     & 0 \\ \hline
+    \end{tabular}%
+    }
+    \end{table}
+
         \par In the context of NEAT, the XOR problem is particularly useful because it requires the evolution
         of both network structure and connection weights to successfully solve. Since the problem cannot
         be solved with a linear perceptron without hidden layers, NEAT's ability to innovate new structures by adding nodes and
@@ -600,7 +616,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
             \item Acrobot - Similarly to previous problem, configuration here utilizes meta field for Gymnasium's environment name. 
             Other than that, the configuration is standard with only mandatory fields being set.
             \item BipedalWalker - This problem required the most adjustments to the configuration.
-            This was because NEAT was not designed to ever work with a negative fitness, as this would break the adjusted fitness calculation.
+            This was because NEAT was not designed to ever work with a negative fitness \cite{ucfNeuroEvolutionAugmenting}, as this would break the adjusted fitness calculation.
             In this environment, however, the fitness can become negative if the agent is not moving forward.
             The specific mechanism that fails in this context is as follows:
 
