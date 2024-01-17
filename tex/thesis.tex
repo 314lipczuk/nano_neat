@@ -102,7 +102,7 @@ a healthy diversity of solutions and preventing stagnation in local minima. Adju
 of various niches in the solution space, enabling the development of novel and potentially superior neural network architectures.
 
 \subsection{Encoding}
-In genetic algorithms, encoding refers to the representation of potential solutions to a problem within a genetic framework, often analogous to chromosomes in biological systems.
+In genetic algorithms \cite{Mitchell_1998}, encoding refers to the representation of potential solutions to a problem within a genetic framework, often analogous to chromosomes in biological systems.
 The choice of encoding is crucial as it dictates how solutions are explored and evaluated.
 Fundamentally, there are two categories to consider: direct and indirect encoding.
 Direct encoding means that the genotype is directly translated into phenotype (such as a neural network). This is the case with a NEAT algorithm.
@@ -118,7 +118,11 @@ commonly found in machine learning and pattern recognition tasks. Graph-based en
 where solutions are best represented as graphs. These encoding schemes, while potentially more powerful and expressive than linear encoding,
 also bring challenges related to maintaining the validity of solutions after genetic operations and ensuring efficient exploration of the solution space.
 The effectiveness of a genetic algorithm is heavily dependent on the appropriateness of its encoding scheme to the problem at hand, as it directly affects the algorithm's ability to generate and evolve valid, high-quality solutions.
-
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{encoding.png}
+        \caption{Encoding of a neural network in NEAT}
+    \end{figure}
 \subsection{Introduction to neural networks}
 
 Neural networks are a broad topic in machine learning, and there are many different types of neural networks.
@@ -128,6 +132,12 @@ perceptron (also called McCulloh-Pitts neuron) - a mathematical model of a biolo
 an activation function, an output, and a summation function.
 It works by taking in the inputs, multiplying them by their respective weights, 
 summing them up using the summation function, and then calculating the output by passing the result of the summation function through the activation function.
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{perceptron.png}
+        \caption{A perceptron diagram}
+    \end{figure}
 
 The activation function determines what in the biological neuron would be the state of the neuron - whether it is firing or not. Whether the activation
 is discrete or continuous is the problem of specific type of perceptron we want to use. Popular for that purpose is sigmoid function, outputting values between 0 and 1.
@@ -248,7 +258,9 @@ From the whole population, but modifying the chance for out-of-specie reproducti
 
 \subsection{Crossover}
 Crossover is a process of combining two genomes into a new one. It is a key part of NEAT, as it is the main way of combining successful traits from different
-genomes. It first aligns the genomes by their innovation numbers. Then, each gene is categorized as either disjoint, excess or matching.
+genomes, despite potentially different topologies.
+This is a challenging problem \cite{Radcliffe} It first aligns the genomes by their innovation numbers.
+Then, each gene is categorized as either disjoint, excess or matching.
 Disjoint genes are genes that are present in only one of the genomes, and excess genes are genes that are present in both genomes, but the innovation number of
 the gene is higher than the highest innovation number in the other genome. Matching genes are genes that are present in both genomes
 The way of combining the genes depends on their category, and configuration parameters passed to the algorithm. The most basic way of combining genes

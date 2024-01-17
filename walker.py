@@ -18,7 +18,7 @@ def activation_function(self, x):
 def calculate_fitness(self, visible=False):
     if visible:
         experiment_name = self.config.meta["gym_environment"]
-        environment = gym.make(experiment_name, render_mode='human', hardcore=True)
+        environment = gym.make(experiment_name, render_mode='human')
     else:
         environment = Population.env
     observation,info = environment.reset()
@@ -56,7 +56,6 @@ def every_generation(p:Population):
 
 def after_finished(p:Population):
     champ = p.champion
-    #champ.calculate_fitness(visible=True)
     champStats = f"{p.generation} {len(champ.nodes)} {len(champ.connections)} "
     with open(f"{p.path}/champStats.txt", "w") as f:
         f.write(champStats)
@@ -87,7 +86,7 @@ DefaultWalkerConfig = Config(
 def main():
     p = Population(config=DefaultWalkerConfig)
     experiment_name = DefaultWalkerConfig.meta["gym_environment"]
-    Population.env = gym.make(experiment_name, render_mode='none', hardcore=True)
+    Population.env = gym.make(experiment_name, render_mode='human')
     p.run()
 
 if __name__ == "__main__":

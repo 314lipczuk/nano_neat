@@ -62,7 +62,7 @@ DefaultCartConfig = Config(
 def main():
     p = Population(config=DefaultCartConfig)
     experiment_name =DefaultCartConfig.meta["gym_environment"]
-    Population.env = gym.make(experiment_name, render_mode='none')
+    Population.env = gym.make(experiment_name, render_mode='human')
     p.run()
 
 if __name__ == "__main__":

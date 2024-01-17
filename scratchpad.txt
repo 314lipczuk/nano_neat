@@ -18,4 +18,26 @@ Xor with bias node added and default config
  count 834 unsolved: 168
 
 Xor with config change #1:
+dynamic threshold = False
+allowRecurrent = False
+xor1:
+{'generations': 0
+ 'connections': 0
+ 'nodes': 0
+ 'averagegenerations': 125.6230283911672
+ 'std_dev_generations': 68.36046258684564
+ 'averagenodes': 10.728706624605678
+ 'std_dev_nodes': 4.768346197217403
+ 'averageconnections': 22.397476340694006
+ 'std_dev_connections': 11.820011633630338} count 634 unsolved: 367
 
+xor2:
+{'generations': 0
+ 'connections': 0
+ 'nodes': 0
+ 'averagegenerations': 132.0353982300885
+ 'std_dev_generations': 72.10835781058492
+ 'averagenodes': 12.557522123893806
+ 'std_dev_nodes': 5.751395449136008
+ 'averageconnections': 25.578171091445427
+ 'std_dev_connections': 14.161383203494447} count 339 unsolved: 662
