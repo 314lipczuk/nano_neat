@@ -14,7 +14,7 @@
  \usepackage[normalem]{ulem}
  \useunder{\uline}{\ul}{}
  \usepackage{float}
-
+\usepackage{graphicx,subcaption,lipsum}
 \title{NanoNeat - a tiny implementation of NeuroEvolution of Augmenting Topologies algorithm with focus on simplicity}
 \author{Przemysław Pilipczuk}
 \date{December 2023}
@@ -255,8 +255,13 @@ The way of combining the genes depends on their category, and configuration para
 is taking the disjoint and excess genes from the fitter parent, or in the case where both parents have the same fitness, taking the gene from a random parent.
 In case of matching genes, depending on the configuration parameter the algorithm either takes the gene from a random parent, or takes the average of the weights 
 of the matching genes.
-A common pattern in NEAT is to mutate the offspring after crossover. This process is described in the next section.
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{crossover.png}
+        \caption{Showcase of crossover process}
+    \end{figure}
 
+A common pattern in NEAT is to mutate the offspring after crossover. This process is described in the next section.
 \subsection{Mutation}
 Mutation in NEAT can be divided into two main categories: structural and non-structural.
 Structural mutations are mutations that change the topology of the network, which is done by adding a new node or a new connection. The process of growing
@@ -272,12 +277,43 @@ to maintain the overall impact of the input on the network, while the weight of 
 This ensures that the new node initially represents the same function as the original connection. Additionally, each of these new connections,
 as well as the new node, are assigned unique innovation numbers, which help track these structural changes across generations. 
 
+
+\begin{figure}[h]
+    \begin{subfigure}{.5\textwidth}
+    \centering
+      \includegraphics[width=1\linewidth]{first_genome.png}
+      \caption{Genome before mutation}
+    \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+    \centering
+      \includegraphics[width=1\linewidth]{second_genome.png}
+      \caption{Genome after mutation}
+    \end{subfigure}
+    \caption{Genome before and after adding a node}
+  \end{figure}
+
 \subsubsection{Adding a connection}
 First, the algorithm chooses a random two non-connected nodes in the genome. Then, depending on the configuration parameters, the conditions for valid connection
 are checked (For example, if recurrent connections are disabled, the algorithm checks if the connection is not going from further to earlier layer). 
 If the connection is valid, it is initialized and added to the genome. During the initialization, the connection is assigned a random weight, and its innovation
 number.
 This process of adding connections increases the network's potential interactions, allowing for more complex behaviors.
+
+\begin{figure}[h]
+    \begin{subfigure}{.5\textwidth}
+    \centering
+      \includegraphics[width=1\linewidth]{second_genome.png}
+      \caption{Genome before mutation}
+    \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+    \centering
+      \includegraphics[width=1\linewidth]{third_genome.png}
+      \caption{Genome after mutation}
+    \end{subfigure}
+    \caption{Genome before and after adding a node}
+  \end{figure}
+
+
 
 \subsubsection{Weight mutation}
 Weight mutation is a mutation that changes the weights of the connections in the genome. It is a form of non-structural mutation, and as such can be considered
