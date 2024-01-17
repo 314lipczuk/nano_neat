@@ -418,7 +418,8 @@ Then, the generation loop starts. During each generation, the algorithm does the
         % Please add the following required packages to your document preamble:
 % \usepackage{graphicx}
 \begin{table}[H]
-    \resizebox{\columnwidth}{!}{%
+    \center
+    \resizebox{2in}{!}{%
     \begin{tabular}{|l|l|l|}
     \hline
     $I_1$ & $I_2$ & O \\ \hline
@@ -428,6 +429,7 @@ Then, the generation loop starts. During each generation, the algorithm does the
     1     & 1     & 0 \\ \hline
     \end{tabular}%
     }
+        \caption{Truth table for XOR}
     \end{table}
 
         \par In the context of NEAT, the XOR problem is particularly useful because it requires the evolution
@@ -858,10 +860,5 @@ of exploit its current topology.
         is not a stated priority, it there are some ways to improve it without sacrificing much of the simplicity.
         The evaluation of the genomes is currently done in a single thread, which is a bottleneck for the whole process.
         It would be good to implement a multithreaded evaluation, which would speed up the process significantly.
-\section{TODO \& Notes}
-\begin{itemize}
-\item cytowania; pomysły: rzeczy z orginalnego papera o TWEANN i metodach, strona autora https://www.cs.ucf.edu/~kstanley/neat.html, strona hyperNeata (do omówienia extensions)
-\item neuroevolution vs gradient descent ?
-\end{itemize}
 \bibliography{references}
 \end{document}
