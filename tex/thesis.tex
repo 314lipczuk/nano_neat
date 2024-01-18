@@ -16,6 +16,8 @@
  \useunder{\uline}{\ul}{}
  \usepackage{float}
 \usepackage{graphicx,subcaption,lipsum}
+\usepackage{changepage}
+\usepackage{tabularx}
 \title{NanoNeat - a tiny implementation of NeuroEvolution of Augmenting Topologies algorithm with focus on simplicity}
 \author{Przemysław Pilipczuk}
 \date{December 2023}
@@ -756,10 +758,15 @@ def after_finished(p:Population):
     used to inspect it.
 
 \section{Experimental results}
+
 Experimental results showed that the system functions as intended, and is able to solve the problems it was designed to solve.
 \begin{itemize}
 \item XOR
+\par XOR problem was tested on multiple configurations, allowing us to present the results in a table below
+
+\begin{minipage}{\linewidth}
 \begin{table}[H]
+\centering
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
@@ -772,6 +779,7 @@ Dynamic threshold off                                                           
 }
 \caption{Results of XOR problem on different configurations}
 \end{table}
+\end{minipage}
 
 \item Acrobot 
 \par Acrobot problem on default configuration solved the problem in all 1000 trials, with average
