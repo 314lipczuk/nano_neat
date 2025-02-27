@@ -2,6 +2,8 @@
 
 Nano Neat is a project focused on implementing NeuroEvolution of Augmenting Topologies (NEAT) for various environments using the Gymnasium library. The project includes experiments on different environments such as Bipedal Walker, CartPole, and Acrobot.
 
+The NeuroEvolution of Augmenting Topologies (NEAT) algorithm is an evolutionary algorithm designed to evolve artificial neural networks (ANNs) over generations. Unlike traditional fixed-topology approaches, NEAT starts with simple networks and gradually complexifies their structure through mutations, speciation, and crossover, allowing for adaptive growth and innovation. More broadly, neuroevolutionary algorithms leverage evolutionary computation techniques, such as genetic algorithms, to optimize neural networks for tasks where gradient-based learning may be ineffective, making them particularly useful for reinforcement learning and control problems.
+
 | Starting Topology | Evolved XOR-Solving Topology |
 |------------------|----------------------------|
 | ![Starting topology](./tex/first_genome.png) | ![Example of evolved XOR topology](./tex/xor_topology_example.png) |
