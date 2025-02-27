@@ -2,16 +2,9 @@
 
 Nano Neat is a project focused on implementing NeuroEvolution of Augmenting Topologies (NEAT) for various environments using the Gymnasium library. The project includes experiments on different environments such as Bipedal Walker, CartPole, and Acrobot.
 
-![Starting topology](./tex/first_genome.png) ![Evolved example of XOR-solving topology](./tex/xor_topology_example.png)
-
-<p align="center">
-  <img src="./tex/first_genome.png" width="45%" alt="Starting topology">
-  <img src="./tex/xor_topology_example.png" width="45%" alt="Evolved XOR topology">
-</p>
-
 | Starting Topology | Evolved XOR-Solving Topology |
 |------------------|----------------------------|
-| ![Starting topology](./tex/first_genome.png) | ![Evolved XOR topology](./tex/xor_topology_example.png) |
+| ![Starting topology](./tex/first_genome.png) | ![Example of evolved XOR topology](./tex/xor_topology_example.png) |
 
 ## Project Structure
 
